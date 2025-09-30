@@ -9,6 +9,9 @@ class Saf {
     _uriString = makeUriString(path: _directory, isTreeUri: true);
   }
 
+  /// Returns current directory path of [Saf] instance
+  String get directory => _directory;
+
   /// Request the user for access to [Directory Permission], if access hasn't already
   /// been grant access before.
   ///
