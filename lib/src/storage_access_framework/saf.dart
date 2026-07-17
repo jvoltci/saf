@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:saf/src/storage_access_framework/api.dart';
+import 'package:saf/src/storage_access_framework/api.dart' as api;
 import 'package:saf/src/channels.dart';
 
 /// Extend the native SAF api funtionality and add some of the real Use case methods for Applicatoions
@@ -12,13 +15,21 @@ class Saf {
   /// Request the user for access to [Directory Permission], if access hasn't already
   /// been grant access before.
   ///
+  /// When [isDynamic] is `false` the picker opens at the directory this instance
+  /// was created for; when `true` it simply lets the user pick any directory.
+  /// In both cases the permission the user actually grants is adopted, so a
+  /// previously granted directory is reused on later launches instead of
+  /// re-prompting every time.
+  ///
   /// Returns [bool].
   Future<bool?> getDirectoryPermission(
       {bool grantWritePermission = true, bool isDynamic = false}) async {
     try {
-      /// Check if user has already Permission Granted
-      var isGranted = await isPersistedPermissionDirectoryFor(_uriString);
-      if (isGranted != null && isGranted) return true;
+      /// Reuse an existing persisted permission for this directory if present.
+      /// Matching is done against the URIs the OS actually granted (not a
+      /// reconstructed string), which is why access is now remembered across
+      /// app restarts. (#27, #34)
+      if (await _adoptPersistedPermission()) return true;
 
       const kOpenDocumentTree = 'openDocumentTree';
       const kGrantWritePermission = 'grantWritePermission';
@@ -36,19 +47,38 @@ class Saf {
       /// Get the URI of user selected Directory path
       final selectedDirectoryUri = await kDocumentFileChannel
           .invokeMethod<String?>(kOpenDocumentTree, args);
-      if (isDynamic) {
-        _uriString = selectedDirectoryUri;
-        _directory = makeDirectoryPath(_uriString!);
-      }
-      if (!isDynamic && selectedDirectoryUri != _uriString) {
-        releasePersistableUriPermission(selectedDirectoryUri);
-        return false;
-      }
+
+      /// User dismissed the picker without choosing anything.
+      if (selectedDirectoryUri == null) return false;
+
+      /// Adopt the directory the user actually granted. Previously this only
+      /// happened for `isDynamic: true`, so `isDynamic: false` always compared
+      /// the granted URI against a reconstructed one that never matched, then
+      /// released the grant and returned false. (#8)
+      _uriString = selectedDirectoryUri;
+      _directory = makeDirectoryPath(selectedDirectoryUri);
 
       return true;
     } catch (e) {
       return null;
     }
+  }
+
+  /// If the OS already holds a persisted permission whose directory matches
+  /// [_directory], adopt its (real) URI and return `true`.
+  Future<bool> _adoptPersistedPermission() async {
+    final uriPermissions = await persistedUriPermissions();
+    if (uriPermissions == null) return false;
+
+    for (final uriPermission in uriPermissions) {
+      final uriString = uriPermission.uri.toString();
+      if (isSameDirectoryPath(makeDirectoryPath(uriString), _directory)) {
+        _uriString = uriString;
+        _directory = makeDirectoryPath(uriString);
+        return true;
+      }
+    }
+    return false;
   }
 
   /// Returns an `List<String>` with all persisted [Directory]
@@ -66,6 +96,25 @@ class Saf {
     }
     return uriStrings;
   }
+
+  /// Returns the content `URI`s of the files inside the granted directory.
+  ///
+  /// Pass one of these URIs to [getDocumentContentAsBytes] to read a file's
+  /// bytes. This is the SAF-correct way to read non-media files on Android 11+,
+  /// where reading the absolute paths from [getFilesPath] through `dart:io`
+  /// fails with a permission error. (#24)
+  Future<List<String>?> getFilesUri({String fileType = "any"}) async {
+    if (_uriString == null) return null;
+    return api.getFilesUri(_uriString!, fileType: fileType);
+  }
+
+  /// Read the full binary content of a file, given its content [uriString]
+  /// (as returned by [getFilesUri]).
+  ///
+  /// Returns the raw bytes for any file type — including non-media files on
+  /// Android 13+ that cannot be read via a `dart:io` `File`. (#24)
+  static Future<Uint8List?> getDocumentContentAsBytes(String uriString) =>
+      api.getDocumentContentAsBytes(Uri.parse(uriString));
 
   /// Equivalent to `DocumentsContract.buildDocumentUriUsingTree` and
   /// here it decode URI's to full Path

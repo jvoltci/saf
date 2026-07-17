@@ -28,16 +28,57 @@ String makeUriString({String path = "", bool isTreeUri = false}) {
 }
 
 /// Convert URI String into Directory path
+///
+/// Works for the primary volume as well as removable/external volumes
+/// (SD card, USB) whose tree URIs use a volume id instead of `primary`,
+/// e.g. `content://com.android.externalstorage.documents/tree/ABB8-7BD7%3APRIVATE`.
+/// The path portion always follows the first `%3A` (URL-encoded `:`) that
+/// separates the volume id from the relative path.
 String makeDirectoryPath(String uriString) {
-  String directoryPathUriString = uriString.split("primary%3A")[1];
-  String directoryPath =
-      directoryPathUriString.replaceAll("%2F", "/").replaceAll("%20", " ");
-  return directoryPath;
+  const marker = "%3A";
+  final markerIndex = uriString.indexOf(marker);
+
+  /// No volume separator found: return the decoded input unchanged rather
+  /// than crashing with a RangeError.
+  final directoryPathUriString =
+      markerIndex == -1 ? uriString : uriString.substring(markerIndex + marker.length);
+  return directoryPathUriString.replaceAll("%2F", "/").replaceAll("%20", " ");
 }
 
 /// Create a name Alias for Directory path e.g. Android/media/matrix -> Android_media_matrix
 String makeDirectoryPathToName(String path) {
   return path.replaceAll("/", "_");
+}
+
+/// Normalize a directory path for comparison by stripping the common
+/// external-storage roots and surrounding slashes.
+///
+/// A filesystem path (`/storage/emulated/0/MyApp`) and the volume-relative
+/// path a SAF tree URI decodes to (`MyApp`) should be treated as the same
+/// directory when deciding whether a persisted permission can be reused.
+String normalizeDirectoryPath(String path) {
+  var p = path.trim();
+  for (final root in const [
+    "/storage/emulated/0/",
+    "/storage/self/primary/",
+    "/sdcard/",
+  ]) {
+    if (p.startsWith(root)) {
+      p = p.substring(root.length);
+      break;
+    }
+  }
+  return p.replaceAll(RegExp(r"^/+"), "").replaceAll(RegExp(r"/+$"), "");
+}
+
+/// Whether two directory paths refer to the same directory, tolerating the
+/// volume-root prefix differences between a filesystem path and a SAF path.
+bool isSameDirectoryPath(String a, String b) {
+  final na = normalizeDirectoryPath(a);
+  final nb = normalizeDirectoryPath(b);
+  if (na == nb) return true;
+  if (na.isEmpty || nb.isEmpty) return false;
+  return na.endsWith("/$nb") || nb.endsWith("/$na");
 }
 
 /// Start Activity Action: Allow the user to pick a directory subtree.
@@ -552,6 +593,22 @@ Future<DocumentFile?> copy(Uri uri, Uri destination) async {
   if (duplicatedFile == null) return null;
 
   return DocumentFile.fromMap(duplicatedFile);
+}
+
+/// Read the full binary content of a document `uri`.
+///
+/// Unlike [getDocumentContent] (which streams text line-by-line and is lossy
+/// for binary data and trailing newlines), this returns the raw bytes and
+/// works for any file type — including non-media files on Android 13+ that
+/// cannot be read through a `dart:io` `File` because of scoped storage. (#24)
+Future<Uint8List?> getDocumentContentAsBytes(Uri uri) async {
+  const kReadDocumentBytes = 'readDocumentBytes';
+  const kUri = 'uri';
+
+  final args = <String, String>{kUri: '$uri'};
+
+  return await kDocumentFileChannel.invokeMethod<Uint8List>(
+      kReadDocumentBytes, args);
 }
 
 /// Get content of a given document `uri`
