@@ -1,13 +1,13 @@
-![saf](https://github.com/ivehement/saf/blob/master/example/screenshots/saf_banner.png?raw=true)
+![saf](https://github.com/jvoltci/saf/blob/master/example/screenshots/saf_banner.png?raw=true)
 <p align="center">
  <a href="https://pub.dartlang.org/packages/saf">
     <img alt="Saf" src="https://img.shields.io/pub/v/saf.svg">
   </a>
-  <a href="https://github.com/ivehement/saf/issues"><img src="https://img.shields.io/github/issues/ivehement/saf">
+  <a href="https://github.com/jvoltci/saf/issues"><img src="https://img.shields.io/github/issues/jvoltci/saf">
   </a>
-  <img src="https://img.shields.io/github/license/ivehement/saf">
-  <!-- <a href="https://github.com/ivehement/saf/actions/workflows/main.yml">
-    <img alt="CI pipeline status" src="https://github.com/ivehement/saf/actions/workflows/main.yml/badge.svg">
+  <img src="https://img.shields.io/github/license/jvoltci/saf">
+  <!-- <a href="https://github.com/jvoltci/saf/actions/workflows/main.yml">
+    <img alt="CI pipeline status" src="https://github.com/jvoltci/saf/actions/workflows/main.yml/badge.svg">
   </a> -->
 </p>
 
@@ -27,7 +27,7 @@ If you have any feature that you want to see in this package, please feel free t
 
 ## Example App
 #### Android
-![Demo](https://github.com/ivehement/saf/blob/master/example/screenshots/saf_example.gif)
+![Demo](https://github.com/jvoltci/saf/blob/master/example/screenshots/saf_example.gif)
 
 ## Usage
 
@@ -58,6 +58,18 @@ bool? directoriesPath = await saf.getPersistedPermissionDirectories();
 ```dart
 
 List<String>? paths = await saf.getFilesPath(FileType.media);
+
+```
+#### Read a file's contents (works for non-media files on Android 13+)
+> On Android 11+ reading the absolute paths from `getFilesPath` through
+> `dart:io` `File` throws a `PathAccessException` for non-media files. Read the
+> file via its SAF content URI instead:
+```dart
+
+List<String>? uris = await saf.getFilesUri();
+if (uris != null && uris.isNotEmpty) {
+  Uint8List? bytes = await Saf.getDocumentContentAsBytes(uris.first);
+}
 
 ```
 #### Cache the current directory
@@ -104,21 +116,21 @@ await Saf.releasePersistedPermissions();
 ```
 
 ## Documentation
-See the **[Saf Wiki](https://github.com/ivehement/saf/wiki)** for every detail on about how to install, setup and use it.
+See the **[Saf Wiki](https://github.com/jvoltci/saf/wiki)** for every detail on about how to install, setup and use it.
 
 ### Saf Wiki
 
-1. [Installation](https://github.com/ivehement/saf/wiki/Installation)
-2. [Setup](https://github.com/ivehement/saf/wiki/Setup)
-   * [Android](https://github.com/ivehement/saf/wiki/Setup#android)
-3. [API](https://github.com/ivehement/saf/wiki/api)
-   * [Methods](https://github.com/ivehement/saf/wiki/API#methods)
-   * [Parameters](https://github.com/ivehement/saf/wiki/API#parameters)
-   * [Filters](https://github.com/ivehement/saf/wiki/API#filters)
-4. [FAQ](https://github.com/ivehement/saf/wiki/FAQ)
-5. [Troubleshooting](https://github.com/ivehement/saf/wiki/Troubleshooting)
+1. [Installation](https://github.com/jvoltci/saf/wiki/Installation)
+2. [Setup](https://github.com/jvoltci/saf/wiki/Setup)
+   * [Android](https://github.com/jvoltci/saf/wiki/Setup#android)
+3. [API](https://github.com/jvoltci/saf/wiki/api)
+   * [Methods](https://github.com/jvoltci/saf/wiki/API#methods)
+   * [Parameters](https://github.com/jvoltci/saf/wiki/API#parameters)
+   * [Filters](https://github.com/jvoltci/saf/wiki/API#filters)
+4. [FAQ](https://github.com/jvoltci/saf/wiki/FAQ)
+5. [Troubleshooting](https://github.com/jvoltci/saf/wiki/Troubleshooting)
 
-For full usage details refer to the **[Wiki](https://github.com/ivehement/saf/wiki)** above.
+For full usage details refer to the **[Wiki](https://github.com/jvoltci/saf/wiki)** above.
 
 ## Getting Started
 
