@@ -84,6 +84,11 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
           result.success(util?.getExternalFilesDirPath())
         }
       }
+      READ_DOCUMENT_BYTES -> {
+        if (Build.VERSION.SDK_INT >= API_21) {
+          readDocumentBytes(call, result)
+        }
+      }
       CREATE_FILE ->
           if (Build.VERSION.SDK_INT >= API_21) {
             createFile(
@@ -437,6 +442,18 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
           eventSink?.endOfStream()
         }
       }
+    }
+  }
+
+  @RequiresApi(API_21)
+  private fun readDocumentBytes(call: MethodCall, result: MethodChannel.Result) {
+    try {
+      val uri = Uri.parse(call.argument<String>("uri")!!)
+      val bytes = plugin.context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+      result.success(bytes)
+    } catch (e: Exception) {
+      Log.e("READ_DOCUMENT_BYTES_EXCEPTION", e.message ?: e.toString())
+      result.success(null)
     }
   }
 

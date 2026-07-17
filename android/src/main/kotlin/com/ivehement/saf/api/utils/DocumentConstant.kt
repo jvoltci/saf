@@ -22,6 +22,7 @@ const val PERSISTED_URI_PERMISSIONS = "persistedUriPermissions"
 const val RELEASE_PERSISTABLE_URI_PERMISSION =
   "releasePersistableUriPermission"
 const val CREATE_FILE = "createFile"
+const val READ_DOCUMENT_BYTES = "readDocumentBytes"
 const val FROM_TREE_URI = "fromTreeUri"
 const val CAN_WRITE = "canWrite"
 const val CAN_READ = "canRead"
