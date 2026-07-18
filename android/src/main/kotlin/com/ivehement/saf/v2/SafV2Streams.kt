@@ -85,16 +85,18 @@ class SessionManager(private val messenger: BinaryMessenger) {
   fun create(): Pair<String, QueuingEventSink> {
     val id = "saf_v2_${System.nanoTime()}_${counter++}"
     val sink = QueuingEventSink()
-    EventChannel(messenger, "com.ivehement.plugins/saf/v2/events/$id")
-      .setStreamHandler(object : EventChannel.StreamHandler {
-        override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
-          sink.setDelegate(MainThreadEventSink(events))
-        }
+    val channel = EventChannel(messenger, "com.ivehement.plugins/saf/v2/events/$id")
+    channel.setStreamHandler(object : EventChannel.StreamHandler {
+      override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+        sink.setDelegate(MainThreadEventSink(events))
+      }
 
-        override fun onCancel(arguments: Any?) {
-          sink.setDelegate(null)
-        }
-      })
+      override fun onCancel(arguments: Any?) {
+        sink.setDelegate(null)
+        // Unregister the per-session handler so it doesn't leak on the messenger.
+        channel.setStreamHandler(null)
+      }
+    })
     return id to sink
   }
 }

@@ -454,15 +454,11 @@ class SafV2Api(private val plugin: SafPlugin) :
     progressOp(result, withProgress, uriStr) { emit ->
       val srcMap = SafDocs.stat(context, Uri.parse(uriStr))
         ?: throw SafNotFoundException("Source missing: $uriStr")
-      var cumulative = 0L
-      val copied = copyRecursive(srcMap, Uri.parse(destDirStr)) { fileDone, name, fileTotal ->
-        emit?.invoke(cumulative + fileDone,
-          if (srcMap["isDir"] == true) null else fileTotal, name)
-      }.also { root ->
-        // Track cumulative bytes across files for directory copies.
-        cumulative = 0L
-        root
-      }
+      val isDir = srcMap["isDir"] == true
+      // base[0] = bytes fully copied in prior files, so directory-copy progress
+      // is a running total instead of resetting to 0 per file.
+      val base = longArrayOf(0L)
+      val copied = copyRecursive(srcMap, Uri.parse(destDirStr), base, isDir, emit)
       if (move) SafDocs.delete(context, Uri.parse(uriStr))
       copied
     }
@@ -470,18 +466,21 @@ class SafV2Api(private val plugin: SafPlugin) :
 
   /**
    * Copies [srcMap] (file or directory) into [destDir]; returns the map of the
-   * created root document. [onFileProgress] gets per-file byte counts.
+   * created root document. Progress is reported as [base]+perFileBytes; for
+   * directory copies [reportTotalNull] is true (grand total is unknown).
    */
   private fun copyRecursive(
     srcMap: Map<String, Any?>,
     destDir: Uri,
-    onFileProgress: (done: Long, name: String, total: Long?) -> Unit,
+    base: LongArray,
+    reportTotalNull: Boolean,
+    emit: ((Long, Long?, String) -> Unit)?,
   ): Map<String, Any?> {
     val name = srcMap["name"] as String
     return if (srcMap["isDir"] == true) {
       val newDir = SafDocs.mkdirp(context, destDir, listOf(name))
       for (kid in SafDocs.listChildren(context, Uri.parse(srcMap["uri"] as String))) {
-        copyRecursive(kid, Uri.parse(newDir["uri"] as String), onFileProgress)
+        copyRecursive(kid, Uri.parse(newDir["uri"] as String), base, reportTotalNull, emit)
       }
       newDir
     } else {
@@ -489,8 +488,9 @@ class SafV2Api(private val plugin: SafPlugin) :
       val target = SafDocs.createFile(context, destDir, mime, name)
       val total = srcMap["length"] as? Long
       SafDocs.copyContents(context, Uri.parse(srcMap["uri"] as String), target) { done ->
-        onFileProgress(done, name, total)
+        emit?.invoke(base[0] + done, if (reportTotalNull) null else total, name)
       }
+      base[0] += total ?: 0L
       SafDocs.stat(context, target) ?: throw SafNotFoundException("Copied doc missing")
     }
   }
@@ -550,7 +550,7 @@ class SafV2Api(private val plugin: SafPlugin) :
           }
           PICK_FILE_CODE -> {
             val uri = data.data!!
-            if (persistable) takePersistable(uri, write = true)
+            if (persistable) takePersistable(uri, write = false)
             SafDocs.stat(context, uri)
           }
           else -> {
@@ -562,7 +562,7 @@ class SafV2Api(private val plugin: SafPlugin) :
               data.data?.let { uris.add(it) }
             }
             uris.mapNotNull { uri ->
-              if (persistable) takePersistable(uri, write = true)
+              if (persistable) takePersistable(uri, write = false)
               SafDocs.stat(context, uri)
             }
           }
