@@ -1,0 +1,87 @@
+/* saf brand palette — Storage Access Framework purple */
+:root {
+  --md-primary-fg-color: #6d28d9;
+  --md-primary-fg-color--light: #7c3aed;
+  --md-primary-fg-color--dark: #4c1d95;
+  --md-accent-fg-color: #7c3aed;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #7c3aed;
+  --md-primary-fg-color--light: #a855f7;
+  --md-primary-fg-color--dark: #5b21b6;
+  --md-accent-fg-color: #a855f7;
+  --md-default-bg-color: #0d0a1a;
+}
+
+/* Landing hero */
+.saf-hero {
+  text-align: center;
+  margin: 1rem 0 3rem;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #3b0764 0%, #6d28d9 55%, #7c3aed 100%);
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(76, 29, 149, 0.35);
+}
+
+.saf-hero h1 {
+  color: #fff;
+  font-size: 3.2rem;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.saf-hero p.tagline {
+  font-size: 1.25rem;
+  margin: 0.6rem auto 1.4rem;
+  max-width: 720px;
+  opacity: 0.96;
+}
+
+.saf-hero .saf-badges {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.saf-hero .saf-badges span {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Feature grid */
+.saf-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.saf-features .card {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.saf-features .card:hover {
+  border-color: var(--md-primary-fg-color);
+  transform: translateY(-2px);
+}
+
+.saf-features .card h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.saf-features .card p {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
