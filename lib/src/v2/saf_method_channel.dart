@@ -266,4 +266,37 @@ class MethodChannelSaf extends SafPlatform {
       );
     });
   }
+
+  @override
+  Future<SafDocumentFile> writeFileStream(
+      String dirUri, String name, String mime, Stream<List<int>> source,
+      {bool overwrite = false, bool append = false}) async {
+    if (overwrite && append) {
+      throw ArgumentError('overwrite and append are mutually exclusive');
+    }
+    final session = await _invoke<String>('startWriteStream', {
+      'dirUri': dirUri,
+      'name': name,
+      'mime': mime,
+      'overwrite': overwrite,
+      'append': append,
+    });
+    try {
+      await for (final chunk in source) {
+        await _invoke<void>('writeChunk', {
+          'session': session,
+          'data': chunk is Uint8List ? chunk : Uint8List.fromList(chunk),
+        });
+      }
+      final m = await _invoke<Map>('endWriteStream', {'session': session});
+      return _doc(m!);
+    } catch (_) {
+      try {
+        await _invoke<void>('abortWriteStream', {'session': session});
+      } on SafException {
+        // Best-effort cleanup; surface the original error instead.
+      }
+      rethrow;
+    }
+  }
 }
