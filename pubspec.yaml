@@ -4,7 +4,7 @@ homepage: https://jvoltci.github.io/saf/
 repository: https://github.com/jvoltci/saf
 issue_tracker: https://github.com/jvoltci/saf/issues
 documentation: https://jvoltci.github.io/saf/
-version: 2.0.0
+version: 2.0.1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

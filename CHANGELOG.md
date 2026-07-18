@@ -1,3 +1,7 @@
+## 2.0.1
+
+* Documentation and presentation polish. No API or behavior changes.
+
 ## 2.0.0
 
 **One class for everything SAF.** The new `Saf` class covers pickers,

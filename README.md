@@ -1,8 +1,4 @@
 <p align="center">
-  <a href="https://jvoltci.github.io/saf/"><img src="https://raw.githubusercontent.com/jvoltci/saf/master/doc/assets/saf-hero.svg" alt="saf — one class for the Android Storage Access Framework" width="100%"></a>
-</p>
-
-<p align="center">
  <a href="https://pub.dartlang.org/packages/saf">
     <img alt="Saf" src="https://img.shields.io/pub/v/saf.svg">
   </a>
@@ -95,32 +91,9 @@ is URI-based — start from `pickDirectory()` and store URIs, not paths.
 facade, and one coroutine-based Kotlin handler on a dedicated channel — the
 legacy 1.x channels are left untouched.
 
-```mermaid
-flowchart LR
-  A["Your Flutter app"] --> B["Saf<br/>(facade)"]
-  B --> C["SafPlatform<br/>platform interface"]
-  C --> D["MethodChannelSaf<br/>saf/v2 channel"]
-  D <--> E["SafV2Api · Kotlin<br/>coroutines · off-main-thread"]
-  E --> F["DocumentsContract<br/>ContentResolver"]
-  F --> G["Android Storage<br/>Access Framework"]
-```
+Flow: **your app → `Saf` (facade) → `SafPlatform` → method channel → `SafV2Api` (Kotlin, coroutines) → `DocumentsContract` → Android SAF.** All I/O runs off the main thread; the legacy 1.x channels are untouched.
 
-A typical grant-then-read flow — one permission prompt, reused across restarts:
-
-```mermaid
-sequenceDiagram
-  participant App
-  participant Saf
-  participant OS as Android SAF
-  App->>Saf: pickDirectory()
-  Saf->>OS: ACTION_OPEN_DOCUMENT_TREE
-  OS-->>Saf: tree URI (+ persisted grant)
-  Saf-->>App: SafDocumentFile
-  App->>Saf: list(dir.uri)
-  Saf-->>App: List&lt;SafDocumentFile&gt;
-  App->>Saf: readFileStream(file.uri)
-  Saf-->>App: Stream&lt;Uint8List&gt;
-```
+See the [architecture page](https://jvoltci.github.io/saf/architecture/) for layer diagrams and a grant-then-read sequence.
 
 ## Documentation
 
