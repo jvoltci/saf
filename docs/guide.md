@@ -129,11 +129,12 @@ final dir = await saf.pickDirectory(); // navigate to .Statuses and grant
 if (dir == null) return;
 
 final appDir = await getExternalStorageDirectory(); // path_provider
-for (final f in await saf.list(dir.uri)) {           // hidden files ARE listed
-  if (f.isDir) continue;
-  await saf.copyToLocalFile(f.uri, '${appDir!.path}/${f.name}');
-}
+// One call — copies every file in the granted folder into your app dir,
+// where they can be opened/saved/shared with dart:io.
+final saved = await saf.copyDirToLocal(dir.uri, appDir!.path);
+print('pulled ${saved.length} files out of the hidden folder');
 ```
 
-`Android/media/…` is grantable on Android 11+ (unlike `Android/data` and
-`Android/obb`, which the system picker blocks).
+`copyDirToLocal` is built on `list` + `copyToLocalFile`; drop to those two if
+you need per-file control or recursion. `Android/media/…` is grantable on
+Android 11+ (unlike `Android/data` and `Android/obb`, which the picker blocks).

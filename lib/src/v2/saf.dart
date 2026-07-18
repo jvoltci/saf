@@ -167,4 +167,23 @@ class Saf {
           {bool overwrite = false, SafProgressCallback? onProgress}) =>
       _p.pasteLocalFile(srcPath, destDirUri, name, mime,
           overwrite: overwrite, onProgress: onProgress);
+
+  /// Copies the files directly inside [dirUri] into the local directory
+  /// [destDirPath] (which must already exist — e.g. your app's
+  /// `getExternalStorageDirectory()`), returning the local paths written.
+  ///
+  /// Restores the classic "cache a granted folder into my app" workflow —
+  /// e.g. pulling WhatsApp `.Statuses` out so they can be saved or shared.
+  /// Only top-level files are copied (sub-directories are skipped). Built on
+  /// [list] + [copyToLocalFile].
+  Future<List<String>> copyDirToLocal(String dirUri, String destDirPath) async {
+    final written = <String>[];
+    for (final f in await list(dirUri)) {
+      if (f.isDir) continue;
+      final dest = '$destDirPath/${f.name}';
+      await copyToLocalFile(f.uri, dest);
+      written.add(dest);
+    }
+    return written;
+  }
 }

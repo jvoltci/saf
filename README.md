@@ -161,7 +161,7 @@ sequenceDiagram
 ## Documentation
 
 - **[Documentation site](https://jvoltci.github.io/saf/)** — full API reference.
-- **[Saf class reference](https://jvoltci.github.io/saf/saf/Saf-class.html)** — all 21 methods.
+- **[Saf class reference](https://jvoltci.github.io/saf/saf/Saf-class.html)** — every method.
 
 ## Getting Started with Flutter
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:saf/saf.dart';
 
 void main() => runApp(const MyApp());
@@ -162,6 +163,19 @@ class _DemoPageState extends State<DemoPage> {
     await _refresh();
   });
 
+  Future<void> _copyToLocal() => _guard('copyToLocal', () async {
+    final appDir = await getExternalStorageDirectory();
+    if (appDir == null) {
+      _print('no app external dir');
+      return;
+    }
+    final paths = await _saf.copyDirToLocal(_dir!.uri, appDir.path);
+    _print('✓ copied ${paths.length} file(s) into app dir');
+    for (final p in paths.take(3)) {
+      _print('  ${p.split('/').last}');
+    }
+  });
+
   @override
   Widget build(BuildContext context) {
     final hasDir = _dir != null;
@@ -199,6 +213,10 @@ class _DemoPageState extends State<DemoPage> {
                 FilledButton.tonal(
                   onPressed: hasDir ? _copyWithProgress : null,
                   child: const Text('Copy+progress'),
+                ),
+                FilledButton.tonal(
+                  onPressed: hasDir ? _copyToLocal : null,
+                  child: const Text('Copy→local'),
                 ),
                 FilledButton.tonal(
                   onPressed: hasDir ? _cleanUp : null,

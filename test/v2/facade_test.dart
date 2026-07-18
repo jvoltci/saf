@@ -42,6 +42,14 @@ class FakePlatform extends SafPlatform with MockPlatformInterfaceMixin {
   @override
   Stream<SafWalkEntry> walk(String dirUri) =>
       Stream.value(const SafWalkEntry(file: doc, relativePath: 'n'));
+
+  final copies = <String>[];
+
+  @override
+  Future<void> copyToLocalFile(String srcUri, String destPath,
+      {SafProgressCallback? onProgress}) async {
+    copies.add('$srcUri->$destPath');
+  }
 }
 
 void main() {
@@ -57,6 +65,17 @@ void main() {
     expect(await saf.exists('exists'), isTrue);
     expect(await saf.exists('missing'), isFalse);
     expect(fake.log, contains('pickDirectory'));
+  });
+
+  test('copyDirToLocal copies each top-level file into the local dir',
+      () async {
+    final fake = FakePlatform();
+    SafPlatform.instance = fake;
+    final saf = Saf();
+
+    final written = await saf.copyDirToLocal('d', '/tmp/app');
+    expect(written, ['/tmp/app/n']);
+    expect(fake.copies, ['u->/tmp/app/n']);
   });
 
   test('legacy LegacySaf is still exported', () {
