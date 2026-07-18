@@ -3,7 +3,7 @@
 ///
 /// The main entry point is the [Saf] class. See the
 /// [project page](https://jvoltci.github.io/saf/) for usage examples.
-library saf;
+library;
 
 export './src/storage_access_framework/saf.dart';
 export './src/storage_access_framework/file_types.dart';
