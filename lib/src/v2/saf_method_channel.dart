@@ -119,4 +119,96 @@ class MethodChannelSaf extends SafPlatform {
     final m = await _invoke<Map>('rename', {'uri': uri, 'newName': newName});
     return _doc(m!);
   }
+
+  // Progress ops -------------------------------------------------------------
+
+  Future<Map<String, dynamic>?> _progressOp(
+    String method,
+    Map<String, dynamic> args,
+    SafProgressCallback? onProgress,
+  ) async {
+    if (onProgress == null) {
+      final m = await _invoke<Object>(method, {...args, 'withProgress': false});
+      return m == null ? null : Map<String, dynamic>.from(m as Map);
+    }
+    final session =
+        await _invoke<String>(method, {...args, 'withProgress': true});
+    final events = EventChannel('$eventsPrefix$session');
+    final completer = Completer<Map<String, dynamic>?>();
+    late final StreamSubscription<dynamic> sub;
+    sub = events.receiveBroadcastStream().listen(
+      (event) {
+        final m = Map<String, dynamic>.from(event as Map);
+        switch (m['type']) {
+          case 'progress':
+            onProgress(SafProgress(
+              bytesDone: (m['bytesDone'] as num).toInt(),
+              totalBytes: (m['totalBytes'] as num?)?.toInt(),
+              currentName: m['currentName'] as String? ?? '',
+            ));
+          case 'done':
+            if (!completer.isCompleted) {
+              final file = m['file'];
+              completer.complete(
+                  file == null ? null : Map<String, dynamic>.from(file as Map));
+            }
+            sub.cancel();
+        }
+      },
+      onError: (Object e) {
+        if (!completer.isCompleted) {
+          completer.completeError(
+              e is PlatformException ? mapPlatformException(e) : e);
+        }
+        sub.cancel();
+      },
+      onDone: () {
+        if (!completer.isCompleted) {
+          completer.completeError(
+              const SafIoException('', 'stream ended without a result'));
+        }
+      },
+    );
+    return completer.future;
+  }
+
+  @override
+  Future<SafDocumentFile> copyTo(String uri, String destDirUri,
+      {SafProgressCallback? onProgress}) async {
+    final m = await _progressOp(
+        'copyTo', {'uri': uri, 'destDirUri': destDirUri}, onProgress);
+    return _doc(m!);
+  }
+
+  @override
+  Future<SafDocumentFile> moveTo(String uri, String destDirUri,
+      {SafProgressCallback? onProgress}) async {
+    final m = await _progressOp(
+        'moveTo', {'uri': uri, 'destDirUri': destDirUri}, onProgress);
+    return _doc(m!);
+  }
+
+  @override
+  Future<void> copyToLocalFile(String srcUri, String destPath,
+      {SafProgressCallback? onProgress}) async {
+    await _progressOp('copyToLocalFile',
+        {'srcUri': srcUri, 'destPath': destPath}, onProgress);
+  }
+
+  @override
+  Future<SafDocumentFile> pasteLocalFile(
+      String srcPath, String destDirUri, String name, String mime,
+      {bool overwrite = false, SafProgressCallback? onProgress}) async {
+    final m = await _progressOp(
+        'pasteLocalFile',
+        {
+          'srcPath': srcPath,
+          'destDirUri': destDirUri,
+          'name': name,
+          'mime': mime,
+          'overwrite': overwrite,
+        },
+        onProgress);
+    return _doc(m!);
+  }
 }
