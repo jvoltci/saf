@@ -50,6 +50,8 @@ class SafV2Api(private val plugin: SafPlugin) :
     val stream: OutputStream,
     val uri: Uri,
     val executor: ExecutorService,
+    /** True when the target was newly created for this write (vs pre-existing). */
+    val created: Boolean,
   )
 
   private val writeSessions = mutableMapOf<String, WriteSession>()
@@ -127,9 +129,19 @@ class SafV2Api(private val plugin: SafPlugin) :
         run(result, uri) {
           val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-          runCatching {
-            context.contentResolver.releasePersistableUriPermission(Uri.parse(uri), flags)
+          // pickDirectory persists the bare tree URI but returns its normalized
+          // tree/<id>/document/<id> form; release the bare tree URI in that
+          // case, since released grants must match the persisted URI exactly.
+          val parsed = Uri.parse(uri)
+          val segments = parsed.pathSegments
+          val target = if (segments.size == 4 && segments[0] == "tree" &&
+            segments[2] == "document" && segments[3] == segments[1]
+          ) {
+            DocumentsContract.buildTreeDocumentUri(parsed.authority, segments[1])
+          } else {
+            parsed
           }
+          context.contentResolver.releasePersistableUriPermission(target, flags)
           null
         }
       }
@@ -204,7 +216,12 @@ class SafV2Api(private val plugin: SafPlugin) :
         run(result, uri) {
           val input = context.contentResolver.openInputStream(Uri.parse(uri))
             ?: throw SafNotFoundException("Cannot open $uri")
-          skipFully(input, start)
+          try {
+            skipFully(input, start)
+          } catch (e: Throwable) {
+            runCatching { input.close() }
+            throw e
+          }
           synchronized(readSessions) {
             val id = "r${readCounter++}"
             readSessions[id] = ReadSession(input, bufferSize)
@@ -269,7 +286,7 @@ class SafV2Api(private val plugin: SafPlugin) :
         val overwrite = call.argument<Boolean>("overwrite") ?: false
         val append = call.argument<Boolean>("append") ?: false
         run(result, dirUri) {
-          val target = resolveWriteTarget(dirUri, name, mime, overwrite, append)
+          val (target, _) = resolveWriteTarget(dirUri, name, mime, overwrite, append)
           val mode = if (append) "wa" else "wt"
           val out = context.contentResolver.openOutputStream(target, mode)
             ?: throw Exception("Cannot open output $target")
@@ -286,7 +303,7 @@ class SafV2Api(private val plugin: SafPlugin) :
         val overwrite = call.argument<Boolean>("overwrite") ?: false
         val append = call.argument<Boolean>("append") ?: false
         run(result, dirUri) {
-          val target = resolveWriteTarget(dirUri, name, mime, overwrite, append)
+          val (target, created) = resolveWriteTarget(dirUri, name, mime, overwrite, append)
           val mode = if (append) "wa" else "wt"
           val out = context.contentResolver.openOutputStream(target, mode)
             ?: throw Exception("Cannot open output $target")
@@ -294,7 +311,7 @@ class SafV2Api(private val plugin: SafPlugin) :
           val id = synchronized(writeSessions) {
             val id = "w${writeCounter++}"
             writeSessions[id] =
-              WriteSession(out, target, Executors.newSingleThreadExecutor())
+              WriteSession(out, target, Executors.newSingleThreadExecutor(), created)
             id
           }
           id
@@ -354,7 +371,9 @@ class SafV2Api(private val plugin: SafPlugin) :
         } else {
           session.executor.execute {
             runCatching { session.stream.close() }
-            runCatching { SafDocs.delete(context, session.uri) }
+            // Only delete targets created by this write; never delete a
+            // document that existed before the write began (overwrite/append).
+            if (session.created) runCatching { SafDocs.delete(context, session.uri) }
             session.executor.shutdown()
             main.post { result.success(null) }
           }
@@ -398,7 +417,7 @@ class SafV2Api(private val plugin: SafPlugin) :
           val src = File(srcPath)
           if (!src.exists()) throw SafNotFoundException("No local file $srcPath")
           val total = src.length()
-          val target = resolveWriteTarget(destDirUri, name, mime, overwrite, append = false)
+          val (target, _) = resolveWriteTarget(destDirUri, name, mime, overwrite, append = false)
           FileInputStream(src).use { ins ->
             val out = context.contentResolver.openOutputStream(target, "wt")
               ?: throw Exception("Cannot open output $target")
@@ -474,19 +493,21 @@ class SafV2Api(private val plugin: SafPlugin) :
     if (!append) runCatching { (out as? FileOutputStream)?.channel?.truncate(0L) }
   }
 
-  /** Existing-child + overwrite/append/auto-rename resolution for writes. */
+  /** Existing-child + overwrite/append/auto-rename resolution for writes.
+   *  Returns the target URI and whether it was newly created (vs pre-existing). */
   private fun resolveWriteTarget(
     dirUri: String,
     name: String,
     mime: String,
     overwrite: Boolean,
     append: Boolean,
-  ): Uri {
+  ): Pair<Uri, Boolean> {
     val dir = Uri.parse(dirUri)
     val existing = SafDocs.child(context, dir, listOf(name))
     return when {
-      existing != null && (overwrite || append) -> Uri.parse(existing["uri"] as String)
-      else -> SafDocs.createFile(context, dir, mime, name)
+      existing != null && (overwrite || append) ->
+        Uri.parse(existing["uri"] as String) to false
+      else -> SafDocs.createFile(context, dir, mime, name) to true
     }
   }
 
@@ -539,6 +560,21 @@ class SafV2Api(private val plugin: SafPlugin) :
       val srcMap = SafDocs.stat(context, Uri.parse(uriStr))
         ?: throw SafNotFoundException("Source missing: $uriStr")
       val isDir = srcMap["isDir"] == true
+      if (isDir) {
+        // Copying a directory into itself (or its own subtree) would recurse
+        // into the freshly created copy and never terminate.
+        val srcDoc = SafDocs.docUriOf(Uri.parse(srcMap["uri"] as String))
+        val destDoc = SafDocs.docUriOf(Uri.parse(destDirStr))
+        if (srcDoc.authority == destDoc.authority) {
+          val srcId = DocumentsContract.getDocumentId(srcDoc)
+          val destId = DocumentsContract.getDocumentId(destDoc)
+          val srcPrefix =
+            if (srcId.endsWith(":") || srcId.endsWith("/")) srcId else "$srcId/"
+          if (destId == srcId || destId.startsWith(srcPrefix)) {
+            throw Exception("Cannot copy or move a directory into itself or its own subtree")
+          }
+        }
+      }
       // base[0] = bytes fully copied in prior files, so directory-copy progress
       // is a running total instead of resetting to 0 per file.
       val base = longArrayOf(0L)
@@ -610,7 +646,14 @@ class SafV2Api(private val plugin: SafPlugin) :
     if (initialUri != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(initialUri))
     }
-    act.startActivityForResult(intent, code)
+    try {
+      act.startActivityForResult(intent, code)
+    } catch (e: Throwable) {
+      // e.g. ActivityNotFoundException on devices without a documents picker;
+      // clear the pending slot so later picks are not rejected forever.
+      synchronized(pendingPicks) { pendingPicks.remove(code) }
+      result.safError(e, null)
+    }
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {

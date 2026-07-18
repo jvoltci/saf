@@ -8,7 +8,18 @@
   bytes (`Uint8List?`), or `null` when the provider has none.
 - New: `SafOpenFd` model (`fd`, `path`).
 - Example: a mini file-manager showcasing the new descriptor and thumbnail APIs.
-- No behavior changes to existing APIs.
+- Fix: an aborted `writeFileStream` no longer deletes a pre-existing target
+  file (`overwrite`/`append`) — only documents created by that write are
+  cleaned up.
+- Fix: `copyTo`/`moveTo` now reject copying a directory into itself or its own
+  subtree instead of recursing until storage fills.
+- Fix: `releasePersistedPermission` now releases directory grants taken by
+  `pickDirectory` (URI-form mismatch made it a silent no-op).
+- Fix: picker failures (e.g. no SAF handler on some Android TV/Go builds) no
+  longer leave the plugin stuck rejecting all future picks.
+- Fix: `openReadSession` no longer leaks the stream when seeking fails.
+- Deprecated `FileTypes` (legacy 1.x, removed in 3.0.0); internal
+  `mapPlatformException` is no longer exported.
 
 ## 2.0.1
 

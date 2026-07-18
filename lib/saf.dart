@@ -6,7 +6,7 @@
 /// See the [project page](https://jvoltci.github.io/saf/) for usage examples.
 library;
 
-export 'src/v2/exceptions.dart';
+export 'src/v2/exceptions.dart' hide mapPlatformException;
 export 'src/v2/models.dart';
 export 'src/v2/saf.dart';
 export 'src/v2/saf_platform_interface.dart' show SafPlatform;
