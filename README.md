@@ -16,9 +16,18 @@
 
 # Saf
 
+**Scoped storage broke `File('/storage/emulated/0/…')`. `saf` is the fix.**
+
 One package for the Android Storage Access Framework: pickers, persisted
 permissions, file management with recursive walk, streamed read/write with
-progress, and local-file bridging — all in a single `Saf` class.
+progress, thumbnails, raw file descriptors, and local-file bridging — all in
+a single `Saf` class. Ask the user once, keep the grant forever, and work
+with their files in a handful of lines instead of hundreds of lines of
+platform code.
+
+```sh
+flutter pub add saf
+```
 
 ## Highlights
 
@@ -35,6 +44,8 @@ progress, and local-file bridging — all in a single `Saf` class.
 ## Quick start
 
 ```dart
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:saf/saf.dart';
 
 final saf = Saf();
@@ -62,6 +73,15 @@ final stream = await saf.readFileStream(doc.uri); // large files
 // 4. Bridge to real file paths when another API needs one.
 await saf.copyToLocalFile(doc.uri, '${cacheDir.path}/summary.txt',
     onProgress: (p) => print('${p.bytesDone}/${p.totalBytes}'));
+
+// 5. Thumbnails for a gallery grid — provider-generated, no full decode.
+final jpeg = await saf.thumbnail(doc.uri, 256, 256, 80); // Uint8List? for Image.memory
+
+// 6. Hand a SAF file to anything that wants a real path or fd —
+//    video players, PDF renderers, sqlite — no copy, auto-closed.
+final title = await saf.withFileDescriptor(doc.uri, 'r', (fd) async {
+  return someNativeLib.readMetadata(fd.path); // /proc/self/fd/<fd>
+});
 ```
 
 Errors are typed — catch what you care about:
@@ -98,19 +118,31 @@ thumbnails now ship (see `openFileDescriptor` / `withFileDescriptor` and
 facade, and one coroutine-based Kotlin handler on a dedicated channel — the
 legacy 1.x channels are left untouched.
 
-Flow: **your app → `Saf` (facade) → `SafPlatform` → method channel → `SafV2Api` (Kotlin, coroutines) → `DocumentsContract` → Android SAF.** All I/O runs off the main thread; the legacy 1.x channels are untouched.
+Flow: **your app → `Saf` (facade) → `SafPlatform` → method channel → `SafV2Api` (Kotlin, coroutines) → `DocumentsContract` → Android SAF.** All I/O runs off the main thread.
 
 See the [architecture page](https://jvoltci.github.io/saf/architecture/) for layer diagrams and a grant-then-read sequence.
 
+## Try it in 30 seconds
+
+The bundled [example](example/) is a mini file manager: pick a folder, browse
+it with live image thumbnails, tap a file for its details and file-descriptor
+path, write a file back. `cd example && flutter run`.
+
+## Quality
+
+- **Tested** — full unit-test suite on the Dart layer; exercised end-to-end on
+  physical devices.
+- **Hardened** — the file layer is written defensively: an aborted write never
+  deletes a pre-existing file, recursive copy refuses to recurse into itself,
+  and every picker/stream failure path cleans up after itself.
+- **Typed & mockable** — sealed exceptions and a platform-interface layer you
+  can fake in your own tests.
+
 ## Documentation
 
-- **[Documentation site](https://jvoltci.github.io/saf/)** — full API reference.
-- **[Saf class reference](https://jvoltci.github.io/saf/saf/Saf-class.html)** — every method.
-
-## Getting Started with Flutter
-
-For help getting started with Flutter, view the online
-[documentation](https://docs.flutter.dev/).
+- **[Documentation site](https://jvoltci.github.io/saf/)** — guides and recipes.
+- **[Saf class reference](https://jvoltci.github.io/saf/api/saf/Saf-class.html)** — every
+  method, generated dartdoc.
 
 ---
 
