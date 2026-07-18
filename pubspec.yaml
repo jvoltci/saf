@@ -32,7 +32,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.ivehement.saf
+        package: com.jvoltci.saf
         pluginClass: SafPlugin
 
   # To add assets to your plugin package, add an assets section, like this:

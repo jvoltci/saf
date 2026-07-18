@@ -1,4 +1,4 @@
-package com.ivehement.saf.v2
+package com.jvoltci.saf.v2
 
 import android.app.Activity
 import android.content.Intent
@@ -7,7 +7,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.DocumentsContract
-import com.ivehement.saf.SafPlugin
+import com.jvoltci.saf.SafPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel

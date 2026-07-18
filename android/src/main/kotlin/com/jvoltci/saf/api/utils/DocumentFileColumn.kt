@@ -1,4 +1,4 @@
-package com.ivehement.saf.api.utils
+package com.jvoltci.saf.api.utils
 
 import android.database.Cursor
 import android.os.Build
@@ -6,7 +6,7 @@ import android.provider.DocumentsContract
 import android.provider.DocumentsProvider
 import androidx.annotation.RequiresApi
 import androidx.documentfile.provider.DocumentFile
-import com.ivehement.saf.plugin.API_19
+import com.jvoltci.saf.plugin.API_19
 
 private const val PREFIX = "DocumentFileColumn"
 

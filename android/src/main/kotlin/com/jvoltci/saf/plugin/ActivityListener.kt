@@ -1,4 +1,4 @@
-package com.ivehement.saf.plugin
+package com.jvoltci.saf.plugin
 
 /// Interface shared across API classes to make
 /// intuitive and clean [init] and [dispose] plugin lifecycle of [Activity] listener resources
