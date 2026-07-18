@@ -211,4 +211,31 @@ class MethodChannelSaf extends SafPlatform {
         onProgress);
     return _doc(m!);
   }
+
+  // Read & write (bytes) -----------------------------------------------------
+
+  @override
+  Future<Uint8List> readFileBytes(String uri, {int? start, int? count}) async {
+    final b = await _invoke<Uint8List>(
+        'readFileBytes', {'uri': uri, 'start': start, 'count': count});
+    return b ?? Uint8List(0);
+  }
+
+  @override
+  Future<SafDocumentFile> writeFileBytes(
+      String dirUri, String name, String mime, Uint8List data,
+      {bool overwrite = false, bool append = false}) async {
+    if (overwrite && append) {
+      throw ArgumentError('overwrite and append are mutually exclusive');
+    }
+    final m = await _invoke<Map>('writeFileBytes', {
+      'dirUri': dirUri,
+      'name': name,
+      'mime': mime,
+      'data': data,
+      'overwrite': overwrite,
+      'append': append,
+    });
+    return _doc(m!);
+  }
 }
