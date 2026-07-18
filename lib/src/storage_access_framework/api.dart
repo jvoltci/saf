@@ -12,8 +12,8 @@ String makeUriString({String path = "", bool isTreeUri = false}) {
   String uri = "";
   String base =
       "content://com.android.externalstorage.documents/tree/primary%3A";
-  String documentUri = "/document/primary%3A" +
-      path.replaceAll("/", "%2F").replaceAll(" ", "%20");
+  String documentUri =
+      "/document/primary%3A${path.replaceAll("/", "%2F").replaceAll(" ", "%20")}";
   if (isTreeUri) {
     uri = base + path.replaceAll("/", "%2F").replaceAll(" ", "%20");
   } else {
@@ -40,8 +40,9 @@ String makeDirectoryPath(String uriString) {
 
   /// No volume separator found: return the decoded input unchanged rather
   /// than crashing with a RangeError.
-  final directoryPathUriString =
-      markerIndex == -1 ? uriString : uriString.substring(markerIndex + marker.length);
+  final directoryPathUriString = markerIndex == -1
+      ? uriString
+      : uriString.substring(markerIndex + marker.length);
   return directoryPathUriString.replaceAll("%2F", "/").replaceAll("%20", " ");
 }
 
@@ -131,7 +132,7 @@ Future<List<String>?> getFilesUri(String treeUriString,
   }
 }
 
-/// Get the path for App Package's [files] Directory i.e. ~/Android/data/<package-id>/files/
+/// Get the path for App Package's `files` directory, e.g. `~/Android/data/<package-id>/files/`
 Future<String?> getExternalFilesDirPath() async {
   try {
     const kGetFilesUri = "getExternalFilesDirPath";
@@ -166,12 +167,12 @@ Future<List<UriPermission>?> persistedUriPermissions() async {
 /// by `openDocumentTree` method
 ///
 /// To get the current persisted [URI]s call `persistedUriPermissions`
-Future<void> releasePersistableUriPermission(directory) async {
+Future<void> releasePersistableUriPermission(String directory) async {
   const kReleasePersistableUriPermission = 'releasePersistableUriPermission';
 
   const kUri = 'uri';
 
-  final args = <String, String>{kUri: '$directory'};
+  final args = <String, String>{kUri: directory};
 
   await kDocumentFileChannel.invokeMethod(
       kReleasePersistableUriPermission, args);
