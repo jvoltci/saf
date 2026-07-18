@@ -1,4 +1,7 @@
-![saf](https://github.com/jvoltci/saf/blob/master/example/screenshots/saf_banner.png?raw=true)
+<p align="center">
+  <a href="https://jvoltci.github.io/saf/"><img src="https://raw.githubusercontent.com/jvoltci/saf/master/doc/assets/saf-hero.svg" alt="saf — one class for the Android Storage Access Framework" width="100%"></a>
+</p>
+
 <p align="center">
  <a href="https://pub.dartlang.org/packages/saf">
     <img alt="Saf" src="https://img.shields.io/pub/v/saf.svg">
@@ -122,6 +125,39 @@ real-world users, so `saf` keeps its surface small on purpose:
 - **File descriptors, thumbnails** — niche; file an issue if you need them
   and they'll ship in a 2.1+.
 
+## Architecture
+
+`saf` is a single package with a mockable platform-interface layer, a thin Dart
+facade, and one coroutine-based Kotlin handler on a dedicated channel — the
+legacy 1.x channels are left untouched.
+
+```mermaid
+flowchart LR
+  A["Your Flutter app"] --> B["Saf<br/>(facade)"]
+  B --> C["SafPlatform<br/>platform interface"]
+  C --> D["MethodChannelSaf<br/>saf/v2 channel"]
+  D <--> E["SafV2Api · Kotlin<br/>coroutines · off-main-thread"]
+  E --> F["DocumentsContract<br/>ContentResolver"]
+  F --> G["Android Storage<br/>Access Framework"]
+```
+
+A typical grant-then-read flow — one permission prompt, reused across restarts:
+
+```mermaid
+sequenceDiagram
+  participant App
+  participant Saf
+  participant OS as Android SAF
+  App->>Saf: pickDirectory()
+  Saf->>OS: ACTION_OPEN_DOCUMENT_TREE
+  OS-->>Saf: tree URI (+ persisted grant)
+  Saf-->>App: SafDocumentFile
+  App->>Saf: list(dir.uri)
+  Saf-->>App: List&lt;SafDocumentFile&gt;
+  App->>Saf: readFileStream(file.uri)
+  Saf-->>App: Stream&lt;Uint8List&gt;
+```
+
 ## Documentation
 
 - **[Documentation site](https://jvoltci.github.io/saf/)** — full API reference.
@@ -131,3 +167,11 @@ real-world users, so `saf` keeps its surface small on purpose:
 
 For help getting started with Flutter, view the online
 [documentation](https://docs.flutter.dev/).
+
+---
+
+<p align="center">
+  <sub>Built &amp; maintained by <a href="https://github.com/jvoltci"><b>jvoltci</b></a> &nbsp;·&nbsp; <a href="https://jvoltci.github.io/saf/">Docs</a> &nbsp;·&nbsp; <a href="https://github.com/jvoltci/saf/issues">Issues</a> &nbsp;·&nbsp; <a href="https://pub.dev/packages/saf">pub.dev</a> &nbsp;·&nbsp; MIT License</sub>
+</p>
+<p align="center"><sub>⭐ If <code>saf</code> saves you time, star the repo — it helps other Flutter devs find it.</sub></p>
+
