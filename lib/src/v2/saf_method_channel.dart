@@ -238,4 +238,32 @@ class MethodChannelSaf extends SafPlatform {
     });
     return _doc(m!);
   }
+
+  // Streams ------------------------------------------------------------------
+
+  Stream<dynamic> _sessionEvents(String session) =>
+      EventChannel('$eventsPrefix$session').receiveBroadcastStream().handleError(
+        (Object e) => throw mapPlatformException(e as PlatformException),
+        test: (e) => e is PlatformException,
+      );
+
+  @override
+  Future<Stream<Uint8List>> readFileStream(String uri,
+      {int? start, int bufferSize = 4194304}) async {
+    final session = await _invoke<String>('readFileStream',
+        {'uri': uri, 'start': start, 'bufferSize': bufferSize});
+    return _sessionEvents(session!).map((e) => e as Uint8List);
+  }
+
+  @override
+  Stream<SafWalkEntry> walk(String dirUri) async* {
+    final session = await _invoke<String>('startWalk', {'dirUri': dirUri});
+    yield* _sessionEvents(session!).map((event) {
+      final m = Map<String, dynamic>.from(event as Map);
+      return SafWalkEntry(
+        file: _doc(m['file'] as Object),
+        relativePath: m['relativePath'] as String,
+      );
+    });
+  }
 }
