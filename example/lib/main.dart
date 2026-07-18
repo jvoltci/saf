@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:saf/saf.dart';
@@ -54,12 +55,12 @@ class _FileExplorerPageState extends State<FileExplorerPage> {
 
     try {
       // Use SAF to get dynamic directory permission (user chooses folder)
-      bool? isGranted = await Saf.getDynamicDirectoryPermission();
+      bool? isGranted = await LegacySaf.getDynamicDirectoryPermission();
 
       if (isGranted == true) {
         // Get the list of persisted permission directories
         List<String>? directories =
-            await Saf.getPersistedPermissionDirectories();
+            await LegacySaf.getPersistedPermissionDirectories();
 
         if (directories != null && directories.isNotEmpty) {
           // Use the most recently granted directory
@@ -73,7 +74,7 @@ class _FileExplorerPageState extends State<FileExplorerPage> {
           debugPrint(
             "DEBUG: Calling Saf.getFilesPathFor with directory: $selectedDirectory",
           );
-          List<String>? filePaths = await Saf.getFilesPathFor(
+          List<String>? filePaths = await LegacySaf.getFilesPathFor(
             selectedDirectory,
             fileType: "any", // Get all file types
           );
@@ -115,7 +116,7 @@ class _FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   Future<void> _clearPermissions() async {
-    await Saf.releasePersistedPermissions();
+    await LegacySaf.releasePersistedPermissions();
     setState(() {
       _filePaths.clear();
       _selectedFolderPath = null;
