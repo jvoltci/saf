@@ -4,11 +4,11 @@ homepage: https://jvoltci.github.io/saf/
 repository: https://github.com/jvoltci/saf
 issue_tracker: https://github.com/jvoltci/saf/issues
 documentation: https://jvoltci.github.io/saf/
-version: 1.0.6
+version: 2.0.0
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=2.5.0"
+  flutter: ">=3.10.0"
 
 dependencies:
   flutter:
