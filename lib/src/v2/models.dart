@@ -114,6 +114,40 @@ class SafPersistedPermission {
       'SafPersistedPermission(uri: $uri, read: $read, write: $write)';
 }
 
+/// A live file descriptor opened via [Saf.openFileDescriptor].
+///
+/// [fd] is the raw integer file descriptor; [path] is the `/proc/self/fd/<fd>`
+/// pseudo-path usable by native/path-based APIs. Must be closed with
+/// [Saf.closeFileDescriptor] (or use [Saf.withFileDescriptor]).
+class SafOpenFd {
+  final int fd;
+  final String path;
+
+  const SafOpenFd({required this.fd, required this.path});
+
+  factory SafOpenFd.fromMap(Map<dynamic, dynamic> map) {
+    return SafOpenFd(
+      fd: (map['fd'] as num).toInt(),
+      path: map['path'] as String,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'fd': fd,
+        'path': path,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      other is SafOpenFd && other.fd == fd && other.path == path;
+
+  @override
+  int get hashCode => Object.hash(fd, path);
+
+  @override
+  String toString() => 'SafOpenFd(fd: $fd, path: $path)';
+}
+
 /// Progress of a long-running copy/move/paste operation.
 class SafProgress {
   /// Bytes processed so far.

@@ -2,10 +2,13 @@ package com.jvoltci.saf.v2
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Point
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
 import com.jvoltci.saf.SafPlugin
 import io.flutter.plugin.common.BinaryMessenger
@@ -17,11 +20,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -57,6 +62,9 @@ class SafV2Api(private val plugin: SafPlugin) :
   private val readSessions = mutableMapOf<String, ReadSession>()
   private var readCounter = 0
 
+  // Live file descriptors opened via openFileDescriptor, keyed by pfd.fd.
+  private val fileDescriptors = ConcurrentHashMap<Int, ParcelFileDescriptor>()
+
   fun startListening(messenger: BinaryMessenger) {
     channel = MethodChannel(messenger, CHANNEL)
     channel?.setMethodCallHandler(this)
@@ -78,6 +86,8 @@ class SafV2Api(private val plugin: SafPlugin) :
       readSessions.values.forEach { runCatching { it.stream.close() } }
       readSessions.clear()
     }
+    fileDescriptors.values.forEach { runCatching { it.close() } }
+    fileDescriptors.clear()
   }
 
   private val context get() = plugin.context
@@ -407,6 +417,50 @@ class SafV2Api(private val plugin: SafPlugin) :
             }
           }
           SafDocs.stat(context, target) ?: throw SafNotFoundException("Pasted doc missing")
+        }
+      }
+
+      "openFileDescriptor" -> {
+        val uri = call.argument<String>("uri")!!
+        val mode = call.argument<String>("mode")!!
+        run(result, uri) {
+          val pfd = context.contentResolver.openFileDescriptor(Uri.parse(uri), mode)
+            ?: throw SafNotFoundException("Cannot open file descriptor for $uri")
+          val fd = pfd.fd
+          fileDescriptors[fd] = pfd
+          mapOf(
+            "fd" to fd,
+            "path" to "/proc/self/fd/$fd",
+          )
+        }
+      }
+
+      "closeFileDescriptor" -> {
+        val fd = call.argument<Number>("fd")!!.toInt()
+        run(result, null) {
+          val pfd = fileDescriptors.remove(fd)
+          runCatching { pfd?.close() }
+          null
+        }
+      }
+
+      "thumbnail" -> {
+        val uri = call.argument<String>("uri")!!
+        val width = call.argument<Number>("width")!!.toInt()
+        val height = call.argument<Number>("height")!!.toInt()
+        val quality = call.argument<Number>("quality")!!.toInt()
+        run(result, uri) {
+          val bitmap = DocumentsContract.getDocumentThumbnail(
+            context.contentResolver, Uri.parse(uri), Point(width, height), null
+          )
+          if (bitmap == null) {
+            null
+          } else {
+            val out = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+            bitmap.recycle()
+            out.toByteArray()
+          }
         }
       }
 

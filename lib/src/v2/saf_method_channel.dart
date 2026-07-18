@@ -315,4 +315,25 @@ class MethodChannelSaf extends SafPlatform {
       rethrow;
     }
   }
+
+  // File descriptor & thumbnail ---------------------------------------------
+
+  @override
+  Future<SafOpenFd> openFileDescriptor(String uri, String mode) async {
+    final m = await _invoke<Map>('openFileDescriptor', {'uri': uri, 'mode': mode});
+    return SafOpenFd.fromMap(Map<String, dynamic>.from(m!));
+  }
+
+  @override
+  Future<void> closeFileDescriptor(int fd) =>
+      _invoke<void>('closeFileDescriptor', {'fd': fd});
+
+  @override
+  Future<Uint8List?> thumbnail(String uri, int width, int height, int quality) =>
+      _invoke<Uint8List>('thumbnail', {
+        'uri': uri,
+        'width': width,
+        'height': height,
+        'quality': quality,
+      });
 }

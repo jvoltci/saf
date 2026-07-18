@@ -26,6 +26,8 @@ progress, and local-file bridging — all in a single `Saf` class.
 - **Typed errors** — `SafPermissionException`, `SafNotFoundException`, `SafAlreadyExistsException`, `SafIoException`.
 - **Recursive `walk()`** plus recursive `copyTo` / `moveTo` with progress callbacks.
 - **Streaming I/O** — backpressured `readFileStream` and one-call `writeFileStream` for large files.
+- **File descriptors** — `openFileDescriptor` / `withFileDescriptor` hand native or path-based APIs a live `/proc/self/fd/<fd>`.
+- **Thumbnails** — `thumbnail()` returns provider-generated JPEG bytes for images and videos.
 - **Persisted permissions** — grant once, reuse across restarts; list them with `persistedPermissions()`.
 - **Hidden folders** — read dotfile folders (e.g. WhatsApp `.Statuses`) and pull them into your app dir with `copyDirToLocal`.
 - **Broad support** — Dart ≥ 3.0, Flutter ≥ 3.10, Android minSdk 21.
@@ -84,10 +86,11 @@ is URI-based — start from `pickDirectory()` and store URIs, not paths.
 
 ## Scope
 
-`saf` keeps a focused, purposeful API. Intentionally out of scope for now:
+`saf` keeps a focused, purposeful API. Raw file descriptors and provider
+thumbnails now ship (see `openFileDescriptor` / `withFileDescriptor` and
+`thumbnail`). Intentionally out of scope for now:
 
 - **Media picking** — use `image_picker` / `photo_manager`, which specialize in it.
-- **Raw file descriptors and thumbnails** — niche; open an issue if you need them and they can land in a 2.1+.
 
 ## Architecture
 

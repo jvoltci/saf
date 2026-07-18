@@ -117,4 +117,16 @@ abstract class SafPlatform extends PlatformInterface {
           String srcPath, String destDirUri, String name, String mime,
           {bool overwrite = false, SafProgressCallback? onProgress}) =>
       throw UnimplementedError('pasteLocalFile() has not been implemented.');
+
+  // File descriptor & thumbnail ---------------------------------------------
+
+  Future<SafOpenFd> openFileDescriptor(String uri, String mode) =>
+      throw UnimplementedError('openFileDescriptor() has not been implemented.');
+
+  Future<void> closeFileDescriptor(int fd) =>
+      throw UnimplementedError(
+          'closeFileDescriptor() has not been implemented.');
+
+  Future<Uint8List?> thumbnail(String uri, int width, int height, int quality) =>
+      throw UnimplementedError('thumbnail() has not been implemented.');
 }

@@ -186,4 +186,39 @@ class Saf {
     }
     return written;
   }
+
+  // File descriptor & thumbnail ---------------------------------------------
+
+  /// Opens a native file descriptor for [uri] in [mode] (one of `r`, `w`,
+  /// `rw`, `wt`), returning its raw [SafOpenFd.fd] and `/proc/self/fd/<fd>`
+  /// path for handing to path-based/native APIs.
+  ///
+  /// The descriptor stays open until you call [closeFileDescriptor]; prefer
+  /// [withFileDescriptor] to guarantee it is closed.
+  Future<SafOpenFd> openFileDescriptor(String uri, String mode) =>
+      _p.openFileDescriptor(uri, mode);
+
+  /// Closes a file descriptor previously opened by [openFileDescriptor].
+  ///
+  /// Idempotent: closing an unknown or already-closed [fd] is a no-op.
+  Future<void> closeFileDescriptor(int fd) => _p.closeFileDescriptor(fd);
+
+  /// Requests a provider-generated thumbnail for [uri], sized up to
+  /// [width]x[height] and JPEG-encoded at [quality] (0-100).
+  ///
+  /// Returns the raw JPEG bytes, or `null` when the provider has no thumbnail.
+  Future<Uint8List?> thumbnail(String uri, int width, int height, int quality) =>
+      _p.thumbnail(uri, width, height, quality);
+
+  /// Opens a file descriptor for [uri] in [mode], runs [action] with it, and
+  /// always closes the descriptor afterwards — even if [action] throws.
+  Future<T> withFileDescriptor<T>(
+      String uri, String mode, Future<T> Function(SafOpenFd) action) async {
+    final descriptor = await openFileDescriptor(uri, mode);
+    try {
+      return await action(descriptor);
+    } finally {
+      await closeFileDescriptor(descriptor.fd);
+    }
+  }
 }

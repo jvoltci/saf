@@ -1,3 +1,15 @@
+## 2.1.0
+
+- New: `openFileDescriptor` / `closeFileDescriptor` open a live file descriptor
+  for a SAF document and expose its `/proc/self/fd/<fd>` path for native or
+  path-based APIs; `withFileDescriptor` opens, runs your action, and always
+  closes in a `finally`.
+- New: `thumbnail(uri, width, height, quality)` returns provider-generated JPEG
+  bytes (`Uint8List?`), or `null` when the provider has none.
+- New: `SafOpenFd` model (`fd`, `path`).
+- Example: a mini file-manager showcasing the new descriptor and thumbnail APIs.
+- No behavior changes to existing APIs.
+
 ## 2.0.1
 
 * Documentation and presentation polish. No API or behavior changes.

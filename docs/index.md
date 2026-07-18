@@ -58,6 +58,11 @@ Grant once, reuse across app restarts. List grants with `persistedPermissions()`
 </div>
 
 <div class="card" markdown>
+### 🔗 Descriptors & thumbnails
+`openFileDescriptor` / `withFileDescriptor` hand native APIs a live `/proc/self/fd` path; `thumbnail()` returns provider JPEG previews.
+</div>
+
+<div class="card" markdown>
 ### 🎯 Typed errors
 `SafPermissionException`, `SafNotFoundException`, … instead of raw `PlatformException`.
 </div>

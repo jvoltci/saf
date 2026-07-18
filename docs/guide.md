@@ -117,6 +117,43 @@ final doc = await saf.pasteLocalFile(
     '${cacheDir.path}/export.zip', dir.uri, 'export.zip', 'application/zip');
 ```
 
+## File descriptors
+
+Some native or path-based APIs want a real file descriptor rather than bytes.
+`openFileDescriptor` opens one and returns a `SafOpenFd` whose `path` is the
+`/proc/self/fd/<fd>` pseudo-path; you own the descriptor until you close it.
+
+```dart
+final fd = await saf.openFileDescriptor(uri, 'r'); // 'r', 'w', 'rw', or 'wt'
+try {
+  print('fd ${fd.fd} at ${fd.path}'); // hand fd.path to the native API
+} finally {
+  await saf.closeFileDescriptor(fd.fd); // idempotent
+}
+```
+
+`withFileDescriptor` does the open / close for you — it always closes in a
+`finally`, even if your action throws:
+
+```dart
+final firstBytes = await saf.withFileDescriptor(uri, 'r', (fd) async {
+  return File(fd.path).openRead(0, 16).first; // dart:io on the fd path
+});
+```
+
+## Thumbnails
+
+`thumbnail` asks the document provider for a preview and returns raw JPEG bytes,
+or `null` when the provider has none. `width` / `height` are a size hint;
+`quality` is `0..100`.
+
+```dart
+final Uint8List? jpeg = await saf.thumbnail(uri, 256, 256, 80);
+if (jpeg != null) {
+  // e.g. Image.memory(jpeg)
+}
+```
+
 ## Hidden folders & WhatsApp statuses
 
 Unlike MediaStore, SAF **lists dotfiles**, so hidden folders like WhatsApp's
