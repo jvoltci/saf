@@ -3,6 +3,11 @@ name: docs
 on:
   push:
     branches: [master]
+    paths:
+      - docs/**
+      - mkdocs.yml
+      - lib/**
+      - .github/workflows/docs.yml
   workflow_dispatch:
 
 permissions:
@@ -19,17 +24,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # MkDocs Material — the guide/landing site
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install MkDocs Material
+        run: pip install mkdocs-material
+      - name: Build docs site
+        run: mkdocs build --site-dir _site
+
+      # dartdoc — the full API reference, served under /api/
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - name: Install dependencies
-        run: flutter pub get
-      - name: Generate API docs
-        run: dart doc --output doc/api
+      - name: Generate API reference
+        run: |
+          flutter pub get
+          dart doc --output _site/api
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: doc/api
+          path: _site
 
   deploy:
     needs: build

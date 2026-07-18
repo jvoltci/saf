@@ -1,4 +1,4 @@
-group 'com.ivehement.saf'
+group 'com.jvoltci.saf'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -25,7 +25,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    namespace 'com.ivehement.saf'
+    namespace 'com.jvoltci.saf'
     compileSdk 35
 
     compileOptions {

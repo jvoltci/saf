@@ -4,15 +4,16 @@ homepage: https://jvoltci.github.io/saf/
 repository: https://github.com/jvoltci/saf
 issue_tracker: https://github.com/jvoltci/saf/issues
 documentation: https://jvoltci.github.io/saf/
-version: 1.0.6
+version: 2.0.0
 
 environment:
-  sdk: ">=2.16.1 <4.0.0"
-  flutter: ">=2.5.0"
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.10.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  plugin_platform_interface: ^2.1.8
 
 dev_dependencies:
   flutter_test:
@@ -31,7 +32,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.ivehement.saf
+        package: com.jvoltci.saf
         pluginClass: SafPlugin
 
   # To add assets to your plugin package, add an assets section, like this:

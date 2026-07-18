@@ -4,11 +4,16 @@ import 'package:saf/src/storage_access_framework/api.dart';
 import 'package:saf/src/storage_access_framework/api.dart' as api;
 import 'package:saf/src/channels.dart';
 
-/// Extend the native SAF api funtionality and add some of the real Use case methods for Applicatoions
-class Saf {
+/// The legacy 1.x path-based API.
+///
+/// Superseded by the URI-based `Saf` class in 2.0.0,
+/// which follows SAF semantics correctly. This class is unchanged from 1.x
+/// and will be removed in 3.0.0.
+@Deprecated('Use the new Saf class instead. LegacySaf will be removed in 3.0.0')
+class LegacySaf {
   String? _uriString;
   String _directory;
-  Saf(this._directory) {
+  LegacySaf(this._directory) {
     _uriString = makeUriString(path: _directory, isTreeUri: true);
   }
 
