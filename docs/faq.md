@@ -1,5 +1,20 @@
 # FAQ
 
+## I have a SAF directory permission — how do I read/write/delete files in it?
+
+Through this package's API, **not `dart:io`**. A SAF grant is accessed only via
+the SAF content API, so `File(path)` from `dart:io` fails on a granted folder.
+Everything you need is on the `Saf` class:
+
+```dart
+final doc  = await saf.writeFileBytes(dir.uri, 'a.txt', 'text/plain', bytes); // create/write
+final data = await saf.readFileBytes(doc.uri);                                // read
+await saf.rename(doc.uri, 'b.txt');                                           // update (rename)
+await saf.delete(doc.uri);                                                     // delete
+```
+
+No second package and no raw `MethodChannel` calls — see [Recipes](guide.md).
+
 ## Why is `saf` Android-only?
 
 The Storage Access Framework is an Android API. There is no cross-platform

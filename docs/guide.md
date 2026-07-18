@@ -6,6 +6,12 @@ Copy-paste snippets for every `Saf` operation. All methods live on one class:
 final saf = Saf();
 ```
 
+!!! warning "Don't use `dart:io` on a SAF folder"
+    A SAF grant gives access **only through this API**, not the filesystem — a
+    `File(path).writeAsString(...)` / `readAsBytes()` from `dart:io` will fail
+    on a granted directory. This is the single most common SAF mistake. Use the
+    `Saf` methods below for every create / read / write / delete.
+
 ## Pick & permissions
 
 ```dart
@@ -110,3 +116,24 @@ await saf.copyToLocalFile(srcUri, '${cacheDir.path}/video.mp4',
 final doc = await saf.pasteLocalFile(
     '${cacheDir.path}/export.zip', dir.uri, 'export.zip', 'application/zip');
 ```
+
+## Hidden folders & WhatsApp statuses
+
+Unlike MediaStore, SAF **lists dotfiles**, so hidden folders like WhatsApp's
+`Android/media/com.whatsapp/WhatsApp/Media/.Statuses` work. Grant the folder,
+list it (hidden files included), and pull each file into your app's own
+directory so it can be saved, shared, or opened with `dart:io`:
+
+```dart
+final dir = await saf.pickDirectory(); // navigate to .Statuses and grant
+if (dir == null) return;
+
+final appDir = await getExternalStorageDirectory(); // path_provider
+for (final f in await saf.list(dir.uri)) {           // hidden files ARE listed
+  if (f.isDir) continue;
+  await saf.copyToLocalFile(f.uri, '${appDir!.path}/${f.name}');
+}
+```
+
+`Android/media/…` is grantable on Android 11+ (unlike `Android/data` and
+`Android/obb`, which the system picker blocks).
