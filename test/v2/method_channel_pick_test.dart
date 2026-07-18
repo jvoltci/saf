@@ -27,8 +27,8 @@ void main() {
     });
   }
 
-  tearDown(() =>
-      messenger.setMockMethodCallHandler(platform.methodChannel, null));
+  tearDown(
+      () => messenger.setMockMethodCallHandler(platform.methodChannel, null));
 
   test('pickDirectory sends args and decodes doc', () async {
     mock((_) => docMap);
@@ -68,8 +68,10 @@ void main() {
           {'uri': 'u', 'read': true, 'write': false, 'persistedTime': 9}
         ]);
     final grants = await platform.persistedPermissions();
-    expect(grants.single,
-        const SafPersistedPermission(uri: 'u', read: true, write: false, persistedTime: 9));
+    expect(
+        grants.single,
+        const SafPersistedPermission(
+            uri: 'u', read: true, write: false, persistedTime: 9));
   });
 
   test('releasePersistedPermission sends uri', () async {

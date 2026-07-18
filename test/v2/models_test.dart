@@ -18,8 +18,12 @@ void main() {
 
     test('fromMap tolerates dynamic maps and missing mimeType', () {
       final m = <dynamic, dynamic>{
-        'uri': 'u', 'name': 'n', 'isDir': true,
-        'length': 0, 'lastModified': 0, 'mimeType': null,
+        'uri': 'u',
+        'name': 'n',
+        'isDir': true,
+        'length': 0,
+        'lastModified': 0,
+        'mimeType': null,
       };
       final d = SafDocumentFile.fromMap(m);
       expect(d.isDir, isTrue);

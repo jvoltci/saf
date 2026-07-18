@@ -38,8 +38,7 @@ class SafIoException extends SafException {
 /// typed [SafException] hierarchy.
 SafException mapPlatformException(PlatformException e) {
   final details = e.details;
-  final uri =
-      (details is Map ? details['uri'] : null)?.toString() ?? '';
+  final uri = (details is Map ? details['uri'] : null)?.toString() ?? '';
   final message = e.message ?? e.code;
   return switch (e.code) {
     'permission' => SafPermissionException(uri, message),

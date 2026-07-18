@@ -241,10 +241,12 @@ class MethodChannelSaf extends SafPlatform {
   // Streams ------------------------------------------------------------------
 
   Stream<dynamic> _sessionEvents(String session) =>
-      EventChannel('$eventsPrefix$session').receiveBroadcastStream().handleError(
-        (Object e) => throw mapPlatformException(e as PlatformException),
-        test: (e) => e is PlatformException,
-      );
+      EventChannel('$eventsPrefix$session')
+          .receiveBroadcastStream()
+          .handleError(
+            (Object e) => throw mapPlatformException(e as PlatformException),
+            test: (e) => e is PlatformException,
+          );
 
   @override
   Future<Stream<Uint8List>> readFileStream(String uri,

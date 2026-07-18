@@ -27,8 +27,8 @@ void main() {
     });
   }
 
-  tearDown(() =>
-      messenger.setMockMethodCallHandler(platform.methodChannel, null));
+  tearDown(
+      () => messenger.setMockMethodCallHandler(platform.methodChannel, null));
 
   test('readFileBytes returns bytes and forwards range', () async {
     mock((_) => Uint8List.fromList([1, 2, 3]));
@@ -39,9 +39,8 @@ void main() {
 
   test('writeFileBytes sends data and decodes result', () async {
     mock((_) => docMap);
-    final d = await platform.writeFileBytes(
-        'content://dir', 'a.bin', 'application/octet-stream',
-        Uint8List.fromList([9, 9, 9, 9]));
+    final d = await platform.writeFileBytes('content://dir', 'a.bin',
+        'application/octet-stream', Uint8List.fromList([9, 9, 9, 9]));
     expect(lastCall!.method, 'writeFileBytes');
     expect(lastCall!.arguments['data'], [9, 9, 9, 9]);
     expect(lastCall!.arguments['overwrite'], false);

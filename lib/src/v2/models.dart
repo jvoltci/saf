@@ -62,8 +62,7 @@ class SafDocumentFile {
       Object.hash(uri, name, isDir, length, lastModified, mimeType);
 
   @override
-  String toString() =>
-      'SafDocumentFile(uri: $uri, name: $name, isDir: $isDir, '
+  String toString() => 'SafDocumentFile(uri: $uri, name: $name, isDir: $isDir, '
       'length: $length, lastModified: $lastModified, mimeType: $mimeType)';
 }
 
@@ -92,8 +91,12 @@ class SafPersistedPermission {
     );
   }
 
-  Map<String, dynamic> toMap() =>
-      {'uri': uri, 'read': read, 'write': write, 'persistedTime': persistedTime};
+  Map<String, dynamic> toMap() => {
+        'uri': uri,
+        'read': read,
+        'write': write,
+        'persistedTime': persistedTime
+      };
 
   @override
   bool operator ==(Object other) =>

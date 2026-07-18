@@ -19,8 +19,8 @@ void main() {
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
-  tearDown(() =>
-      messenger.setMockMethodCallHandler(platform.methodChannel, null));
+  tearDown(
+      () => messenger.setMockMethodCallHandler(platform.methodChannel, null));
 
   test('copyTo without progress is a plain call', () async {
     late MethodCall seen;
@@ -81,8 +81,8 @@ void main() {
       seen = call;
       return docMap;
     });
-    await platform.pasteLocalFile('/tmp/src', 'content://dir', 'a.txt',
-        'text/plain');
+    await platform.pasteLocalFile(
+        '/tmp/src', 'content://dir', 'a.txt', 'text/plain');
     expect(seen.method, 'pasteLocalFile');
     expect(seen.arguments['name'], 'a.txt');
     expect(seen.arguments['overwrite'], false);

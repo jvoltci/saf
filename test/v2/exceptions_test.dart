@@ -7,10 +7,9 @@ void main() {
       code: code, message: 'boom', details: {'uri': 'content://x'});
 
   test('maps stable codes to typed exceptions', () {
-    expect(mapPlatformException(pe('permission')),
-        isA<SafPermissionException>());
-    expect(mapPlatformException(pe('not_found')),
-        isA<SafNotFoundException>());
+    expect(
+        mapPlatformException(pe('permission')), isA<SafPermissionException>());
+    expect(mapPlatformException(pe('not_found')), isA<SafNotFoundException>());
     expect(mapPlatformException(pe('already_exists')),
         isA<SafAlreadyExistsException>());
     expect(mapPlatformException(pe('io')), isA<SafIoException>());

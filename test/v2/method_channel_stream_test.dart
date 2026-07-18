@@ -20,8 +20,8 @@ void main() {
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
-  tearDown(() =>
-      messenger.setMockMethodCallHandler(platform.methodChannel, null));
+  tearDown(
+      () => messenger.setMockMethodCallHandler(platform.methodChannel, null));
 
   test('readFileStream yields chunks until endOfStream', () async {
     messenger.setMockMethodCallHandler(platform.methodChannel, (call) async {

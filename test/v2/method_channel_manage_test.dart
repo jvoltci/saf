@@ -27,8 +27,8 @@ void main() {
     });
   }
 
-  tearDown(() =>
-      messenger.setMockMethodCallHandler(platform.methodChannel, null));
+  tearDown(
+      () => messenger.setMockMethodCallHandler(platform.methodChannel, null));
 
   test('list decodes children', () async {
     mock((_) => [docMap]);
