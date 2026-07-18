@@ -84,4 +84,39 @@ class MethodChannelSaf extends SafPlatform {
   @override
   Future<void> releasePersistedPermission(String uri) =>
       _invoke<void>('releasePersistedPermission', {'uri': uri});
+
+  // Manage ------------------------------------------------------------------
+
+  @override
+  Future<List<SafDocumentFile>> list(String dirUri) async {
+    final l = await _invoke<List>('list', {'dirUri': dirUri});
+    return (l ?? const []).map(_doc).toList();
+  }
+
+  @override
+  Future<SafDocumentFile?> stat(String uri) async {
+    final m = await _invoke<Map>('stat', {'uri': uri});
+    return m == null ? null : _doc(m);
+  }
+
+  @override
+  Future<SafDocumentFile?> child(String dirUri, List<String> names) async {
+    final m = await _invoke<Map>('child', {'dirUri': dirUri, 'names': names});
+    return m == null ? null : _doc(m);
+  }
+
+  @override
+  Future<SafDocumentFile> mkdirp(String dirUri, List<String> names) async {
+    final m = await _invoke<Map>('mkdirp', {'dirUri': dirUri, 'names': names});
+    return _doc(m!);
+  }
+
+  @override
+  Future<void> delete(String uri) => _invoke<void>('delete', {'uri': uri});
+
+  @override
+  Future<SafDocumentFile> rename(String uri, String newName) async {
+    final m = await _invoke<Map>('rename', {'uri': uri, 'newName': newName});
+    return _doc(m!);
+  }
 }
