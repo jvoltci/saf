@@ -12,119 +12,122 @@
 </p>
 
 # Saf
-Flutter plugin that leverages Storage Access Framework (SAF) API to get access and perform the operations on files and folders.
 
-## Currently supported features
-* Uses OS default native file explorer
-* Access the **hidden** folder and files
-* Accessing directories
-* **Caching** the files inside the app External files directory
-* **Syncing** the files of some directory with cached one
-* Different default type filtering (media, image, video, audio or any)
-* Support Android
+One package for the Android Storage Access Framework: pickers, persisted
+permissions, file management with recursive walk, streamed read/write with
+progress, and local-file bridging — a single `Saf` class that replaces the
+`saf_stream` + `saf_util` combination.
 
-If you have any feature that you want to see in this package, please feel free to issue a suggestion. 🎉
+## Why saf
 
-## Example App
-#### Android
-![Demo](https://github.com/jvoltci/saf/blob/master/example/screenshots/saf_example.gif)
+| | saf 2.x | saf_stream + saf_util |
+| --- | --- | --- |
+| Packages needed | **1** | 2 |
+| Typed exceptions (`SafNotFoundException`, …) | **yes** | no (raw `PlatformException`) |
+| Recursive `walk()` stream | **yes** | no |
+| Recursive copy/move with progress callbacks | **yes** | no |
+| One-call `writeFileStream` | **yes** | 3-call session dance |
+| `isDir` parameters you must supply | **none** | required on most calls |
+| List persisted permissions | **yes** | no |
+| Dart / Flutter minimum | **3.0 / 3.10** | 3.12 / 3.44 |
+| Min Android SDK | 21 | 21 |
 
-## Usage
+## Quick start
 
-To use this plugin, add `saf` as a [dependency in your pubspec.yaml file](https://flutter.dev/docs/development/platform-integration/platform-channels).
-
-### Initiate Saf with instance
 ```dart
-Saf saf = Saf("~/some/path")
-```
+import 'package:saf/saf.dart';
 
-#### Directory Permission request
-```dart
-bool? isGranted = await saf.getDirectoryPermission(isDynamic: false);
+final saf = Saf();
 
-if (isGranted != null && isGranted) {
-  // Perform some file operations
-} else {
-  // failed to get the permission
-}
-```
-#### Get the list of all the paths for the Granted Directories
-```dart
+// 1. Ask once — the grant persists across restarts.
+final dir = await saf.pickDirectory();
+if (dir == null) return; // user cancelled
 
-bool? directoriesPath = await saf.getPersistedPermissionDirectories();
+// Later launches: reuse the grant instead of prompting again.
+final grants = await saf.persistedPermissions();
 
-```
-#### Get paths of all the files for current directory
-```dart
-
-List<String>? paths = await saf.getFilesPath(FileType.media);
-
-```
-#### Read a file's contents (works for non-media files on Android 13+)
-> On Android 11+ reading the absolute paths from `getFilesPath` through
-> `dart:io` `File` throws a `PathAccessException` for non-media files. Read the
-> file via its SAF content URI instead:
-```dart
-
-List<String>? uris = await saf.getFilesUri();
-if (uris != null && uris.isNotEmpty) {
-  Uint8List? bytes = await Saf.getDocumentContentAsBytes(uris.first);
+// 2. Manage files.
+final files = await saf.list(dir.uri);
+final report = await saf.mkdirp(dir.uri, ['reports', '2026']);
+await for (final entry in saf.walk(dir.uri)) {
+  print(entry.relativePath);
 }
 
+// 3. Read and write.
+final doc = await saf.writeFileBytes(
+    report.uri, 'summary.txt', 'text/plain', utf8.encode('hi') as Uint8List);
+final bytes = await saf.readFileBytes(doc.uri);
+final stream = await saf.readFileStream(doc.uri); // large files
+
+// 4. Bridge to real file paths when another API needs one.
+await saf.copyToLocalFile(doc.uri, '${cacheDir.path}/summary.txt',
+    onProgress: (p) => print('${p.bytesDone}/${p.totalBytes}'));
 ```
-#### Cache the current directory
+
+Errors are typed — catch what you care about:
+
 ```dart
-
-bool? isCached = await saf.cache();
-
-if (isCached != null && isCached) {
-  // Perform some file operations
-} else {
-  // failed to cache
+try {
+  await saf.delete(uri);
+} on SafPermissionException {
+  // re-pick the directory
+} on SafNotFoundException {
+  // already gone
 }
-
 ```
-#### Get the cached files' path for current directory
-```dart
 
-List<String>? cachedFilesPath = await saf.getCachedFilesPath();
+## Migrating
 
-```
-#### Clear cache for the current directory
-```dart
+### From saf 1.x
 
-bool? isClear = await saf.clearCache();
+The old path-based class still works as `LegacySaf` (deprecated, removed in
+3.0.0): rename `Saf(` → `LegacySaf(` and migrate at your own pace. The new API
+is URI-based — start from `pickDirectory()` and store URIs, not paths.
 
-```
-#### Sync the current directory with the cached one
-```dart
+### From saf_stream / saf_util
 
-bool? isSynced = await saf.sync();
+Near find-and-replace — method names were kept where sensible:
 
-```
-#### Release the persisted permission for current directory
-```dart
+| saf_stream / saf_util | saf 2.x |
+| --- | --- |
+| `SafStream().readFileBytes(uri)` | `Saf().readFileBytes(uri)` |
+| `SafStream().readFileStream(uri)` | `Saf().readFileStream(uri)` |
+| `SafStream().writeFileBytes(dir, name, mime, data)` | `Saf().writeFileBytes(dir, name, mime, data)` |
+| `startWriteStream` / `writeChunk` / `endWriteStream` | one call: `Saf().writeFileStream(dir, name, mime, stream)` |
+| `SafStream().copyToLocalFile(src, dest)` | `Saf().copyToLocalFile(src, dest)` |
+| `SafStream().pasteLocalFile(src, dir, name, mime)` | `Saf().pasteLocalFile(src, dir, name, mime)` |
+| `SafUtil().pickDirectory(persistablePermission: …)` | `Saf().pickDirectory(persistablePermission: …)` |
+| `SafUtil().pickFile()` / `pickFiles()` | `Saf().pickFile()` / `pickFiles()` |
+| `SafUtil().list(uri)` | `Saf().list(uri)` |
+| `SafUtil().stat(uri, isDir)` | `Saf().stat(uri)` — no `isDir` needed |
+| `SafUtil().exists(uri, isDir)` | `Saf().exists(uri)` |
+| `SafUtil().mkdirp(uri, names)` | `Saf().mkdirp(uri, names)` |
+| `SafUtil().child(uri, names)` | `Saf().child(uri, names)` |
+| `SafUtil().rename(uri, isDir, newName)` | `Saf().rename(uri, newName)` |
+| `SafUtil().copyTo(uri, isDir, dest)` | `Saf().copyTo(uri, dest)` — recursive + progress |
+| `SafUtil().moveTo(uri, isDir, parent, dest)` | `Saf().moveTo(uri, dest)` |
+| `SafUtil().hasPersistedPermission(uri)` | check `Saf().persistedPermissions()` |
+| `SafUtil().releasePersistedPermission(uri)` | `Saf().releasePersistedPermission(uri)` |
 
-bool? isReleased = await Saf.releasePersistedPermission();
+## What we deliberately don't include (and why)
 
-```
-#### Release the persisted permissions for all the granted directories
-```dart
+Public-GitHub usage analysis showed several competitor APIs have ~zero
+real-world users, so `saf` keeps its surface small on purpose:
 
-await Saf.releasePersistedPermissions();
-
-```
+- **Custom read sessions** (`readCustomFileStreamChunk` etc.) — ~4 public
+  usages; `readFileStream(start: …)` covers seeking.
+- **`readFileSync` / `writeFileSync`** — not actually synchronous; duplicates.
+- **`openDirectory` / `openFile` variants** — URI-only duplicates of `pick*`.
+- **Media picker** — `image_picker` / `photo_manager` do this better.
+- **File descriptors, thumbnails** — niche; file an issue if you need them
+  and they'll ship in a 2.1+.
 
 ## Documentation
 
-- **[Documentation site](https://jvoltci.github.io/saf/)** — full API reference (generated from source).
-- **[API reference](https://jvoltci.github.io/saf/saf/Saf-class.html)** — the `Saf` class and its methods.
+- **[Documentation site](https://jvoltci.github.io/saf/)** — full API reference.
+- **[Saf class reference](https://jvoltci.github.io/saf/saf/Saf-class.html)** — all 21 methods.
 
-The usage examples above cover the common operations; see the docs site for the complete API.
+## Getting Started with Flutter
 
-## Getting Started
-
-For help getting started with Flutter, view our online
-[documentation](https://flutter.io/).
-
-For help on editing plugin code, view the [documentation](https://flutter.io/platform-plugins/#edit-code).
+For help getting started with Flutter, view the online
+[documentation](https://docs.flutter.dev/).

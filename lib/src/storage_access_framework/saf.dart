@@ -6,7 +6,7 @@ import 'package:saf/src/channels.dart';
 
 /// The legacy 1.x path-based API.
 ///
-/// Superseded by the URI-based [not exported here] `Saf` class in 2.0.0,
+/// Superseded by the URI-based `Saf` class in 2.0.0,
 /// which follows SAF semantics correctly. This class is unchanged from 1.x
 /// and will be removed in 3.0.0.
 @Deprecated('Use the new Saf class instead. LegacySaf will be removed in 3.0.0')
