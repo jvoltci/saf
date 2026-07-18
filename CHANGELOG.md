@@ -1,3 +1,12 @@
+## 1.0.6
+
+* Added a documentation site (dartdoc) published to GitHub Pages at
+  https://jvoltci.github.io/saf/, and pointed the package homepage there
+  (replaces the removed wiki links).
+* Added GitHub Actions: CI (format + analyze + test) and docs deployment.
+* Documentation and lint polish: `flutter analyze` and `dart doc` are now clean
+  (0 issues, 0 warnings); example uses `debugPrint`.
+
 ## 1.0.5
 
 * **Removed the `permission_handler` dependency** from the plugin. It was unused

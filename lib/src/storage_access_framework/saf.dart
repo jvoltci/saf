@@ -12,7 +12,7 @@ class Saf {
     _uriString = makeUriString(path: _directory, isTreeUri: true);
   }
 
-  /// Request the user for access to [Directory Permission], if access hasn't already
+  /// Request the user for access to `Directory Permission`, if access hasn't already
   /// been grant access before.
   ///
   /// When [isDynamic] is `false` the picker opens at the directory this instance
@@ -84,7 +84,7 @@ class Saf {
   /// Returns an `List<String>` with all persisted [Directory]
   ///
   /// To persist an [Directory] call `getDirectoryPermission`
-  /// and to remove an persisted [URI] call `releasePersistedPermissions`
+  /// and to remove an persisted `URI` call `releasePersistedPermissions`
   static Future<List<String>?> getPersistedPermissionDirectories() async {
     var uriPermissions = await persistedUriPermissions();
 
@@ -140,7 +140,7 @@ class Saf {
     }
   }
 
-  // Request to `cache` the Granted Directory into App's Package [files] folder
+  // Request to `cache` the Granted Directory into App's Package `files` folder
   Future<List<String>?> cache({String? fileType}) async {
     try {
       const kCacheToExternalFilesDirectory = "cacheToExternalFilesDirectory";
@@ -188,7 +188,7 @@ class Saf {
     }
   }
 
-  // Request to `cache` the single files from Granted Directory into App's Package [files] folder
+  // Request to `cache` the single files from Granted Directory into App's Package `files` folder
   Future<String?> singleCache({
     required String? filePath,
     String? directory,
@@ -218,7 +218,7 @@ class Saf {
     }
   }
 
-  /// Returns `bool` after deleting files from App's Package [files] folder
+  /// Returns `bool` after deleting files from App's Package `files` folder
   /// for respective Granted Directory
   /// To cache an [Directory] call `cache`
   Future<bool?> clearCache() async {
@@ -264,16 +264,16 @@ class Saf {
 
   /// Will revoke an persistable URI
   ///
-  /// Call this when your App no longer wants the permission of an [URI] returned
+  /// Call this when your App no longer wants the permission of an `URI` returned
   /// by `getDirectoryPermission` method
   ///
-  /// To get the current persisted [URI]s call `getPersistedPermissionDirectories`
+  /// To get the current persisted `URI`s call `getPersistedPermissionDirectories`
   Future<void> releasePersistedPermission() async {
     await releasePersistableUriPermission(
         makeUriString(path: _directory, isTreeUri: true));
   }
 
-  /// Request the user for access to [Directory Permission] of User choice
+  /// Request the user for access to `Directory Permission` of User choice
   ///
   /// Returns [bool].
   static Future<bool?> getDynamicDirectoryPermission(
@@ -326,7 +326,7 @@ class Saf {
   }
 
   /// Static method for Dynamic call
-  // Request to `cache` the Granted Directory into App's Package [files] folder
+  // Request to `cache` the Granted Directory into App's Package `files` folder
   static Future<List<String>?> cacheFor(String? directory,
       {String fileType = "any"}) async {
     if (directory == null) return null;
@@ -379,7 +379,7 @@ class Saf {
   }
 
   /// Static method for Dynamic call
-  /// Returns `bool` after deleting files from App's Package [files] folder
+  /// Returns `bool` after deleting files from App's Package `files` folder
   /// for respective Granted Directory
   /// To cache an [Directory] call `cache`
   static Future<bool?> clearCacheFor(String? directory) async {
@@ -430,9 +430,9 @@ class Saf {
 
   /// Will revoke an persistable URI
   ///
-  /// Call this when your App no longer wants the permission of all the [URI]s
+  /// Call this when your App no longer wants the permission of all the `URI`s
   ///
-  /// To get the current persisted [URI]s call `getPersistedPermissionDirectories`
+  /// To get the current persisted `URI`s call `getPersistedPermissionDirectories`
   static Future<void> releasePersistedPermissions() async {
     var persistedPermissionDirectories =
         await getPersistedPermissionDirectories();
@@ -461,7 +461,7 @@ class Saf {
   /// is allowed to be write or read from SAF API's
   ///
   /// This uses the `persistedUriPermissions` method to get the List
-  /// of allowed [URI]s then will verify if the [uri] is included in
+  /// of allowed `URI`s then will verify if the `uri` is included in
   static Future<bool?> isPersistedPermissionDirectoryFor(
       String? uriString) async {
     if (uriString == null) return null;

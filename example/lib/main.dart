@@ -70,27 +70,29 @@ class _FileExplorerPageState extends State<FileExplorerPage> {
           });
 
           // Get all files recursively from the selected directory
-          print("DEBUG: Calling Saf.getFilesPathFor with directory: $selectedDirectory");
+          debugPrint(
+            "DEBUG: Calling Saf.getFilesPathFor with directory: $selectedDirectory",
+          );
           List<String>? filePaths = await Saf.getFilesPathFor(
             selectedDirectory,
             fileType: "any", // Get all file types
           );
 
-          print("DEBUG: Received filePaths: $filePaths");
-          print("DEBUG: FilePaths length: ${filePaths?.length ?? 0}");
+          debugPrint("DEBUG: Received filePaths: $filePaths");
+          debugPrint("DEBUG: FilePaths length: ${filePaths?.length ?? 0}");
 
           if (filePaths != null) {
             setState(() {
               _filePaths = filePaths;
               _isLoading = false;
             });
-            print("DEBUG: Updated UI with ${filePaths.length} files");
+            debugPrint("DEBUG: Updated UI with ${filePaths.length} files");
           } else {
             setState(() {
               _errorMessage = "No files found in the selected directory";
               _isLoading = false;
             });
-            print("DEBUG: No files found, showing error message");
+            debugPrint("DEBUG: No files found, showing error message");
           }
         } else {
           setState(() {
