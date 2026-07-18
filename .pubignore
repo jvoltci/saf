@@ -1,0 +1,5 @@
+# Website source — built and deployed to GitHub Pages by CI, not needed in the
+# published pub package (keeps the archive small and avoids the pub "docs vs
+# doc" layout warning). The rendered docs live at https://jvoltci.github.io/saf/.
+docs/
+mkdocs.yml
