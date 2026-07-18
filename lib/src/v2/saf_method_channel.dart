@@ -251,9 +251,24 @@ class MethodChannelSaf extends SafPlatform {
   @override
   Future<Stream<Uint8List>> readFileStream(String uri,
       {int? start, int bufferSize = 4194304}) async {
-    final session = await _invoke<String>('readFileStream',
+    final session = await _invoke<String>('openReadSession',
         {'uri': uri, 'start': start, 'bufferSize': bufferSize});
-    return _sessionEvents(session!).map((e) => e as Uint8List);
+    return _pullReadChunks(session!);
+  }
+
+  /// Pull-based read: request the next chunk only after the consumer is ready,
+  /// so the native side never reads ahead (backpressure, no unbounded buffer).
+  Stream<Uint8List> _pullReadChunks(String session) async* {
+    try {
+      while (true) {
+        final chunk =
+            await _invoke<Uint8List>('readSessionChunk', {'session': session});
+        if (chunk == null) break; // null => end of stream
+        yield chunk;
+      }
+    } finally {
+      await _invoke<void>('closeReadSession', {'session': session});
+    }
   }
 
   @override

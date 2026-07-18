@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -49,6 +50,13 @@ class SafV2Api(private val plugin: SafPlugin) :
   private val writeSessions = mutableMapOf<String, WriteSession>()
   private var writeCounter = 0
 
+  // Pull-based read sessions: Dart requests one chunk at a time, so the native
+  // side never reads ahead of the consumer (backpressure, no unbounded buffer).
+  private class ReadSession(val stream: InputStream, val bufferSize: Int)
+
+  private val readSessions = mutableMapOf<String, ReadSession>()
+  private var readCounter = 0
+
   fun startListening(messenger: BinaryMessenger) {
     channel = MethodChannel(messenger, CHANNEL)
     channel?.setMethodCallHandler(this)
@@ -65,6 +73,10 @@ class SafV2Api(private val plugin: SafPlugin) :
         it.executor.shutdown()
       }
       writeSessions.clear()
+    }
+    synchronized(readSessions) {
+      readSessions.values.forEach { runCatching { it.stream.close() } }
+      readSessions.clear()
     }
   }
 
@@ -175,30 +187,39 @@ class SafV2Api(private val plugin: SafPlugin) :
         }
       }
 
-      "readFileStream" -> {
+      "openReadSession" -> {
         val uri = call.argument<String>("uri")!!
         val start = call.argument<Number>("start")?.toLong() ?: 0L
         val bufferSize = call.argument<Number>("bufferSize")!!.toInt()
-        val (session, sink) = sessions!!.create()
-        result.success(session)
-        scope.launch {
-          try {
-            val input = context.contentResolver.openInputStream(Uri.parse(uri))
-              ?: throw SafNotFoundException("Cannot open $uri")
-            input.use { ins ->
-              skipFully(ins, start)
-              val buf = ByteArray(bufferSize)
-              while (!sink.cancelled) {
-                val n = ins.read(buf)
-                if (n < 0) break
-                sink.success(buf.copyOf(n))
-              }
-            }
-            sink.endOfStream()
-          } catch (e: Throwable) {
-            sink.error(errorCodeOf(e), e.message ?: e.toString(), mapOf("uri" to uri))
-            sink.endOfStream()
+        run(result, uri) {
+          val input = context.contentResolver.openInputStream(Uri.parse(uri))
+            ?: throw SafNotFoundException("Cannot open $uri")
+          skipFully(input, start)
+          synchronized(readSessions) {
+            val id = "r${readCounter++}"
+            readSessions[id] = ReadSession(input, bufferSize)
+            id
           }
+        }
+      }
+
+      "readSessionChunk" -> {
+        val id = call.argument<String>("session")!!
+        run(result, null) {
+          val session = synchronized(readSessions) { readSessions[id] }
+            ?: throw SafNotFoundException("No read session $id")
+          val buf = ByteArray(session.bufferSize)
+          val n = session.stream.read(buf)
+          if (n < 0) null else buf.copyOf(n) // null => end of stream
+        }
+      }
+
+      "closeReadSession" -> {
+        val id = call.argument<String>("session")!!
+        run(result, null) {
+          val session = synchronized(readSessions) { readSessions.remove(id) }
+          runCatching { session?.stream?.close() }
+          null
         }
       }
 
@@ -242,6 +263,7 @@ class SafV2Api(private val plugin: SafPlugin) :
           val mode = if (append) "wa" else "wt"
           val out = context.contentResolver.openOutputStream(target, mode)
             ?: throw Exception("Cannot open output $target")
+          truncateForOverwrite(out, append)
           out.use { it.write(data); it.flush() }
           SafDocs.stat(context, target) ?: throw SafNotFoundException("Written doc missing")
         }
@@ -258,6 +280,7 @@ class SafV2Api(private val plugin: SafPlugin) :
           val mode = if (append) "wa" else "wt"
           val out = context.contentResolver.openOutputStream(target, mode)
             ?: throw Exception("Cannot open output $target")
+          truncateForOverwrite(out, append)
           val id = synchronized(writeSessions) {
             val id = "w${writeCounter++}"
             writeSessions[id] =
@@ -369,6 +392,7 @@ class SafV2Api(private val plugin: SafPlugin) :
           FileInputStream(src).use { ins ->
             val out = context.contentResolver.openOutputStream(target, "wt")
               ?: throw Exception("Cannot open output $target")
+            truncateForOverwrite(out, append = false)
             out.use { outs ->
               val buf = ByteArray(1 shl 16)
               var done = 0L
@@ -388,6 +412,12 @@ class SafV2Api(private val plugin: SafPlugin) :
 
       else -> result.notImplemented()
     }
+  }
+
+  /** Best-effort truncate so overwriting longer content with shorter content
+   *  leaves no stale trailing bytes on providers that ignore the "wt" flag. */
+  private fun truncateForOverwrite(out: OutputStream, append: Boolean) {
+    if (!append) runCatching { (out as? FileOutputStream)?.channel?.truncate(0L) }
   }
 
   /** Existing-child + overwrite/append/auto-rename resolution for writes. */
