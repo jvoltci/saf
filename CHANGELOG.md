@@ -1,10 +1,9 @@
 ## 2.0.0
 
-**One class for everything SAF.** The new `Saf` class replaces the
-`saf_stream` + `saf_util` combination: pickers, persisted permissions, file
-management, recursive `walk()`, byte/stream read-write with progress
-callbacks, and local-file bridging — 21 methods, typed exceptions, no `isDir`
-parameters.
+**One class for everything SAF.** The new `Saf` class covers pickers,
+persisted permissions, file management, recursive `walk()`, byte/stream
+read-write with progress callbacks, and local-file bridging — one focused
+API, typed exceptions, no `isDir` parameters.
 
 **BREAKING:** the legacy path-based class is renamed `LegacySaf`
 (deprecated, removal in 3.0.0). Its behavior is unchanged — existing code

@@ -18,22 +18,17 @@
 
 One package for the Android Storage Access Framework: pickers, persisted
 permissions, file management with recursive walk, streamed read/write with
-progress, and local-file bridging — a single `Saf` class that replaces the
-`saf_stream` + `saf_util` combination.
+progress, and local-file bridging — all in a single `Saf` class.
 
-## Why saf
+## Highlights
 
-| | saf 2.x | saf_stream + saf_util |
-| --- | --- | --- |
-| Packages needed | **1** | 2 |
-| Typed exceptions (`SafNotFoundException`, …) | **yes** | no (raw `PlatformException`) |
-| Recursive `walk()` stream | **yes** | no |
-| Recursive copy/move with progress callbacks | **yes** | no |
-| One-call `writeFileStream` | **yes** | 3-call session dance |
-| `isDir` parameters you must supply | **none** | required on most calls |
-| List persisted permissions | **yes** | no |
-| Dart / Flutter minimum | **3.0 / 3.10** | 3.12 / 3.44 |
-| Min Android SDK | 21 | 21 |
+- **One class, no ceremony** — pickers, permissions, file management, and I/O all on `Saf`; no `isDir` parameters anywhere.
+- **Typed errors** — `SafPermissionException`, `SafNotFoundException`, `SafAlreadyExistsException`, `SafIoException`.
+- **Recursive `walk()`** plus recursive `copyTo` / `moveTo` with progress callbacks.
+- **Streaming I/O** — backpressured `readFileStream` and one-call `writeFileStream` for large files.
+- **Persisted permissions** — grant once, reuse across restarts; list them with `persistedPermissions()`.
+- **Hidden folders** — read dotfile folders (e.g. WhatsApp `.Statuses`) and pull them into your app dir with `copyDirToLocal`.
+- **Broad support** — Dart ≥ 3.0, Flutter ≥ 3.10, Android minSdk 21.
 
 ## Quick start
 
@@ -87,43 +82,12 @@ The old path-based class still works as `LegacySaf` (deprecated, removed in
 3.0.0): rename `Saf(` → `LegacySaf(` and migrate at your own pace. The new API
 is URI-based — start from `pickDirectory()` and store URIs, not paths.
 
-### From saf_stream / saf_util
+## Scope
 
-Near find-and-replace — method names were kept where sensible:
+`saf` keeps a focused, purposeful API. Intentionally out of scope for now:
 
-| saf_stream / saf_util | saf 2.x |
-| --- | --- |
-| `SafStream().readFileBytes(uri)` | `Saf().readFileBytes(uri)` |
-| `SafStream().readFileStream(uri)` | `Saf().readFileStream(uri)` |
-| `SafStream().writeFileBytes(dir, name, mime, data)` | `Saf().writeFileBytes(dir, name, mime, data)` |
-| `startWriteStream` / `writeChunk` / `endWriteStream` | one call: `Saf().writeFileStream(dir, name, mime, stream)` |
-| `SafStream().copyToLocalFile(src, dest)` | `Saf().copyToLocalFile(src, dest)` |
-| `SafStream().pasteLocalFile(src, dir, name, mime)` | `Saf().pasteLocalFile(src, dir, name, mime)` |
-| `SafUtil().pickDirectory(persistablePermission: …)` | `Saf().pickDirectory(persistablePermission: …)` |
-| `SafUtil().pickFile()` / `pickFiles()` | `Saf().pickFile()` / `pickFiles()` |
-| `SafUtil().list(uri)` | `Saf().list(uri)` |
-| `SafUtil().stat(uri, isDir)` | `Saf().stat(uri)` — no `isDir` needed |
-| `SafUtil().exists(uri, isDir)` | `Saf().exists(uri)` |
-| `SafUtil().mkdirp(uri, names)` | `Saf().mkdirp(uri, names)` |
-| `SafUtil().child(uri, names)` | `Saf().child(uri, names)` |
-| `SafUtil().rename(uri, isDir, newName)` | `Saf().rename(uri, newName)` |
-| `SafUtil().copyTo(uri, isDir, dest)` | `Saf().copyTo(uri, dest)` — recursive + progress |
-| `SafUtil().moveTo(uri, isDir, parent, dest)` | `Saf().moveTo(uri, dest)` |
-| `SafUtil().hasPersistedPermission(uri)` | check `Saf().persistedPermissions()` |
-| `SafUtil().releasePersistedPermission(uri)` | `Saf().releasePersistedPermission(uri)` |
-
-## What we deliberately don't include (and why)
-
-Public-GitHub usage analysis showed several competitor APIs have ~zero
-real-world users, so `saf` keeps its surface small on purpose:
-
-- **Custom read sessions** (`readCustomFileStreamChunk` etc.) — ~4 public
-  usages; `readFileStream(start: …)` covers seeking.
-- **`readFileSync` / `writeFileSync`** — not actually synchronous; duplicates.
-- **`openDirectory` / `openFile` variants** — URI-only duplicates of `pick*`.
-- **Media picker** — `image_picker` / `photo_manager` do this better.
-- **File descriptors, thumbnails** — niche; file an issue if you need them
-  and they'll ship in a 2.1+.
+- **Media picking** — use `image_picker` / `photo_manager`, which specialize in it.
+- **Raw file descriptors and thumbnails** — niche; open an issue if you need them and they can land in a 2.1+.
 
 ## Architecture
 

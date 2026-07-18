@@ -8,7 +8,7 @@ hide:
 
 # saf
 
-<p class="tagline">One class for the Android Storage Access Framework — pickers, persisted permissions, file management, streaming read/write, recursive walk, and progress. Replaces <code>saf_stream</code> + <code>saf_util</code>.</p>
+<p class="tagline">One class for the Android Storage Access Framework — pickers, persisted permissions, file management, streaming read/write, recursive walk, and progress.</p>
 
 <div class="saf-badges">
   <span>Flutter ≥ 3.10</span>
@@ -73,6 +73,6 @@ Dart ≥ 3.0, Flutter ≥ 3.10, Android minSdk 21 — wider than the alternative
 
 - **[Install & first run](getting-started.md)** — add the dependency and grant your first directory.
 - **[Recipes](guide.md)** — copy-paste snippets for every operation.
-- **[Migrate](migration.md)** — from saf 1.x, `saf_stream`, or `saf_util`.
+- **[Migrate](migration.md)** — from saf 1.x.
 - **[Architecture](architecture.md)** — how the Dart facade talks to the Kotlin SAF layer.
 - **[API reference](https://jvoltci.github.io/saf/api/)** — the full generated dartdoc.
