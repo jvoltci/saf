@@ -1,5 +1,4 @@
 // test/v2/method_channel_bytes_test.dart
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

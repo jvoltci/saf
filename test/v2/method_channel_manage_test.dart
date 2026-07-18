@@ -2,7 +2,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saf/src/v2/exceptions.dart';
-import 'package:saf/src/v2/models.dart';
 import 'package:saf/src/v2/saf_method_channel.dart';
 
 const docMap = {

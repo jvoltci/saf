@@ -1,9 +1,7 @@
 // test/v2/method_channel_write_stream_test.dart
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:saf/src/v2/exceptions.dart';
 import 'package:saf/src/v2/saf_method_channel.dart';
 
 const docMap = {
