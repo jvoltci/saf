@@ -1,3 +1,14 @@
+## 2.1.2
+
+- Fix: build failure on AGP 9 with `android.builtInKotlin=false` (#45). 2.1.1
+  inferred built-in Kotlin from the AGP major version alone, so projects using
+  Flutter's documented opt-out got neither built-in Kotlin nor KGP and failed
+  with `Could not find method kotlin()`. The guard now mirrors Flutter's own
+  `isBuiltInKotlinEnabled` rule and reads the property.
+- Fix: no more spurious "plugins that apply Kotlin Gradle Plugin (KGP): saf"
+  warning on AGP 9. Flutter's check regex-scans the build script and cannot see
+  the conditional, so KGP is now applied via `pluginManager.apply` instead.
+
 ## 2.1.1
 
 - Android: compatible with AGP 9's built-in Kotlin (#45). The Kotlin Gradle

@@ -23,12 +23,24 @@ rootProject.allprojects {
 
 apply plugin: 'com.android.library'
 
-// AGP 9+ ships built-in Kotlin; applying KGP on top of it conflicts.
-// Apply KGP only on older AGP so both old and new Flutter versions build.
+// AGP 9+ ships built-in Kotlin; applying KGP on top of it conflicts. But AGP 9
+// projects can opt out via `android.builtInKotlin=false`, and then nothing
+// provides Kotlin unless we apply KGP ourselves. So mirror the exact rule
+// Flutter uses in FlutterPluginUtils.isBuiltInKotlinEnabled: built-in Kotlin is
+// on when AGP major >= 9 and the property is absent or true.
 // https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-plugin-authors
 def agpMajor = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION.tokenize('.')[0] as int
-if (agpMajor < 9) {
-    apply plugin: 'kotlin-android'
+def builtInKotlinProp = providers.gradleProperty('android.builtInKotlin').getOrNull()
+// Deliberately not an elvis chain: Groovy treats a parsed `false` as falsy, so
+// `prop?.toBoolean() ?: true` would wrongly read builtInKotlin=false as true.
+def builtInKotlin = agpMajor >= 9 && (builtInKotlinProp == null || builtInKotlinProp.toBoolean())
+if (!builtInKotlin) {
+    // pluginManager.apply(), not `apply plugin:`, on purpose. Flutter's
+    // built-in-Kotlin check regex-scans this file's text and cannot see the
+    // guard above, so a literal `apply plugin: 'kotlin-android'` string
+    // triggers a false "plugin applies KGP" warning on AGP 9. This is the
+    // same call Flutter's own FlutterPluginUtils.kt uses.
+    pluginManager.apply("kotlin-android")
 }
 
 kotlin {
