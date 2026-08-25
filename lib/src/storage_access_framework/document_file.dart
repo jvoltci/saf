@@ -31,7 +31,7 @@ class DocumentFile {
   /// Same as `uri.toDocumentFile` where `uri` is of type `Uri`
   static Future<DocumentFile?> fromTreeUri(Uri uri) => saf.fromTreeUri(uri);
 
-  Future<bool?> canRead() async => saf.canWrite(uri);
+  Future<bool?> canRead() async => saf.canRead(uri);
 
   Future<bool?> canWrite() async => saf.canWrite(uri);
 

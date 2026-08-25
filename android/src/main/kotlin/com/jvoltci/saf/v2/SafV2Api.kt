@@ -141,7 +141,14 @@ class SafV2Api(private val plugin: SafPlugin) :
           } else {
             parsed
           }
-          context.contentResolver.releasePersistableUriPermission(target, flags)
+          // AOSP throws SecurityException("No permission grants found") when no
+          // grant record exists — i.e. on a double release or an unknown URI.
+          // Releasing an absent grant is a no-op, so keep the call idempotent.
+          try {
+            context.contentResolver.releasePersistableUriPermission(target, flags)
+          } catch (e: SecurityException) {
+            // Nothing to release; treat as already released.
+          }
           null
         }
       }
@@ -469,6 +476,10 @@ class SafV2Api(private val plugin: SafPlugin) :
         val height = call.argument<Number>("height")!!.toInt()
         val quality = call.argument<Number>("quality")!!.toInt()
         run(result, uri) {
+          require(width > 0 && height > 0) {
+            "thumbnail size must be positive, got ${width}x$height"
+          }
+          require(quality in 0..100) { "thumbnail quality must be 0-100, got $quality" }
           val bitmap = DocumentsContract.getDocumentThumbnail(
             context.contentResolver, Uri.parse(uri), Point(width, height), null
           )
@@ -476,9 +487,10 @@ class SafV2Api(private val plugin: SafPlugin) :
             null
           } else {
             val out = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+            val encoded = bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
             bitmap.recycle()
-            out.toByteArray()
+            // A failed encode leaves an empty stream; don't pass that off as bytes.
+            if (encoded) out.toByteArray() else null
           }
         }
       }

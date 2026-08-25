@@ -125,7 +125,10 @@ object SafDocs {
   /** Renames a document, returning its (possibly new) URI. */
   fun rename(context: Context, uri: Uri, newName: String): Uri {
     val doc = docUriOf(uri)
-    return DocumentsContract.renameDocument(context.contentResolver, doc, newName) ?: doc
+    // renameDocument returns the original URI when the rename succeeded without
+    // changing it, and null only on failure — so null must not be mapped to doc.
+    return DocumentsContract.renameDocument(context.contentResolver, doc, newName)
+      ?: throw Exception("Failed to rename $uri to $newName")
   }
 
   /**

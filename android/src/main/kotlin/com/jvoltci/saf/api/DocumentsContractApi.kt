@@ -172,8 +172,9 @@ internal class DocumentsContractApi(private val plugin: SafPlugin) :
         if (Build.VERSION.SDK_INT >= API_21) {
           val rootUri = Uri.parse(call.argument("rootUri"))
           val documentId = call.argument<String>("documentId")
-          val width = call.argument<Int>("width")!!
-          val height = call.argument<Int>("height")!!
+          // Dart sends these as double, so they arrive as java.lang.Double.
+          val width = call.argument<Number>("width")!!.toInt()
+          val height = call.argument<Number>("height")!!.toInt()
 
           val uri =
             DocumentsContract.buildDocumentUriUsingTree(rootUri, documentId)
@@ -186,21 +187,17 @@ internal class DocumentsContractApi(private val plugin: SafPlugin) :
           )
 
           CoroutineScope(Dispatchers.Default).launch {
-            if (bitmap != null) {
-              val base64 = bitmapToBase64(bitmap)
+            val data = if (bitmap == null) null else mapOf(
+              "base64" to bitmapToBase64(bitmap),
+              "uri" to "$uri",
+              "width" to bitmap.width,
+              "height" to bitmap.height,
+              "byteCount" to bitmap.byteCount,
+              "density" to bitmap.density
+            )
 
-              val data = mapOf(
-                "base64" to base64,
-                "uri" to "$uri",
-                "width" to bitmap.width,
-                "height" to bitmap.height,
-                "byteCount" to bitmap.byteCount,
-                "density" to bitmap.density
-              )
-
-              launch(Dispatchers.Main) {
-                result.success(data)
-              }
+            launch(Dispatchers.Main) {
+              result.success(data)
             }
           }
         } else {

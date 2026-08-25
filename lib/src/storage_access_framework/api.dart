@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:saf/src/channels.dart';
@@ -117,7 +118,7 @@ Future<List<String>?> getFilesUri(String treeUriString,
     const kGetFilesUri = "buildChildDocumentsUriUsingTree";
 
     const kFileType = "fileType";
-    const kTreeUriString = "treeUriString";
+    const kTreeUriString = "sourceTreeUriString";
 
     final args = <String, dynamic>{
       kFileType: fileType,
@@ -449,7 +450,7 @@ Future<DocumentFile?> createFileAsString(Uri parentUri,
     parentUri,
     displayName: displayName,
     mimeType: mimeType,
-    content: Uint8List.fromList(content.codeUnits),
+    content: Uint8List.fromList(utf8.encode(content)),
   );
 }
 

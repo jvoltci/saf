@@ -147,6 +147,10 @@ class Saf {
 
   /// Writes a whole [source] stream as a file in one call — no session
   /// bookkeeping required.
+  ///
+  /// If the stream fails partway, a file this call created is removed, but a
+  /// pre-existing document opened with `overwrite`/`append` is left as-is and
+  /// may hold partial content — read it back before trusting it.
   Future<SafDocumentFile> writeFileStream(
           String dirUri, String name, String mime, Stream<List<int>> source,
           {bool overwrite = false, bool append = false}) =>
@@ -200,7 +204,10 @@ class Saf {
 
   /// Closes a file descriptor previously opened by [openFileDescriptor].
   ///
-  /// Idempotent: closing an unknown or already-closed [fd] is a no-op.
+  /// Closing an [fd] this plugin does not track is a no-op. Do not close the
+  /// descriptor yourself or hand it to an API that takes ownership of it: the
+  /// kernel reuses fd numbers, so a later call here could close an unrelated
+  /// descriptor that inherited the same number. Prefer [withFileDescriptor].
   Future<void> closeFileDescriptor(int fd) => _p.closeFileDescriptor(fd);
 
   /// Requests a provider-generated thumbnail for [uri], sized up to

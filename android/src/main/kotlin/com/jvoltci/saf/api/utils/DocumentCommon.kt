@@ -239,7 +239,7 @@ fun traverseDirectoryEntries(
 
         block(createCursorRowMap(rootUri, parent, uri, data, isDirectory = isDirectory))
 
-        if (isDirectory != null && isDirectory) {
+        if (!rootOnly && isDirectory != null && isDirectory) {
           val nextChildren = DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, id)
           val nextNode = Pair(uri, nextChildren)
 

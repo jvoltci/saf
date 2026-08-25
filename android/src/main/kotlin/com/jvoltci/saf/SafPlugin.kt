@@ -56,6 +56,7 @@ class SafPlugin: FlutterPlugin, ActivityAware {
   
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
       this.binding = binding
+      storageAccessFrameworkApi.startListeningToActivity()
       safV2Api?.let { binding.addActivityResultListener(it) }
     }
   

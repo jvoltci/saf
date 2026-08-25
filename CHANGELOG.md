@@ -4,6 +4,23 @@
   Plugin is now applied only when building with AGP < 9, so the plugin builds
   on both current Flutter versions and the upcoming built-in-Kotlin default.
   No Dart API changes.
+- Fix: `rename` no longer reports success when the provider rejected the rename
+  (a null `renameDocument` result means failure, not "unchanged").
+- Fix: `releasePersistedPermission` is idempotent again — releasing an already
+  released or never-persisted URI no longer throws (regression in 2.1.0).
+- Fix: `thumbnail` returns `null` instead of empty bytes when JPEG encoding
+  fails, and rejects non-positive sizes or out-of-range quality.
+- Docs: `closeFileDescriptor` is only safe for descriptors this plugin still
+  owns (fd numbers are reused); an aborted `overwrite`/`append` write can leave
+  the pre-existing document with partial content.
+- Legacy `LegacySaf` fixes: `DocumentFile.canRead` no longer returns write
+  status; `getFilesUri` sent the wrong argument key and always returned null;
+  `createFileAsString` now writes UTF-8 instead of truncated UTF-16;
+  `singleCache` never ran at all; `copy` and `getDocumentThumbnail` never
+  completed their futures (thumbnail also crashed on an Int/double mismatch);
+  cache/sync results are posted on the main thread as MethodChannel requires;
+  `listFiles` no longer walks the whole subtree when `mimeType` is requested and
+  now closes its stream; the picker works again after a configuration change.
 
 ## 2.1.0
 

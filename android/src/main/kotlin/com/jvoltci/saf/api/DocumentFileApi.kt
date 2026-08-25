@@ -61,7 +61,7 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
       }
       SINGLE_CACHE_TO_EXTERNAL_FILES_DIRECTORY -> {
         if (Build.VERSION.SDK_INT >= API_21) {
-          singleCacheToExternalFilesDir(call, result, util!!)
+          Thread(singleCacheToExternalFilesDir(call, result, util!!)).start()
         }
       }
       CLEAR_CACHED_FILES -> {
@@ -179,7 +179,19 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
           val uri = Uri.parse(call.argument<String>("uri")!!)
 
           if (Build.VERSION.SDK_INT >= API_24) {
-            DocumentsContract.copyDocument(plugin.context.contentResolver, uri, destination)
+            try {
+              val copied =
+                  DocumentsContract.copyDocument(plugin.context.contentResolver, uri, destination)
+              result.success(
+                  if (copied != null) createDocumentFileMap(documentFromUri(plugin.context, copied))
+                  else null
+              )
+            } catch (e: Exception) {
+              // Most providers (including ExternalStorageProvider) lack
+              // FLAG_SUPPORTS_COPY and throw UnsupportedOperationException.
+              Log.e("COPY_EXCEPTION", e.message ?: e.toString())
+              result.success(null)
+            }
           } else {
             val content = StringBuilder()
 
@@ -425,6 +437,10 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
                             }
                             .toTypedArray()
                 ) { data -> launch(Dispatchers.Main) { eventSink?.success(data) } }
+
+                // Main-dispatched emissions run in dispatch order, so this
+                // closes the stream after the last row has been delivered.
+                launch(Dispatchers.Main) { eventSink?.endOfStream() }
               }
             }
           }
@@ -545,10 +561,10 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
           }
         }
         
-        result.success(cachedFilesPath.toList())
+        Handler(Looper.getMainLooper()).post { result.success(cachedFilesPath.toList()) }
       } catch (e: Exception) {
-        Log.e("CACHING_EXCEPTION", e.message!!)
-        result.success(null)
+        Log.e("CACHING_EXCEPTION", e.message ?: e.toString())
+        Handler(Looper.getMainLooper()).post { result.success(null) }
       }
     }
   }
@@ -564,10 +580,10 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
         val copiedPath: String? = util.syncCopyFileToExternalStorage(sourceUri, cacheDirectoryName!!, nameFromFileUri(sourceUri).toString())
         if(copiedPath != null) cachedFilePath = copiedPath.toString()
   
-        result.success(cachedFilePath)
+        Handler(Looper.getMainLooper()).post { result.success(cachedFilePath) }
       } catch (e: Exception) {
-        Log.e("SINGLE_CACHING_EXCEPTION", e.message!!)
-        result.success(null)
+        Log.e("SINGLE_CACHING_EXCEPTION", e.message ?: e.toString())
+        Handler(Looper.getMainLooper()).post { result.success(null) }
       }
     }
   }
@@ -630,8 +646,8 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
           result.success(true)
         }
       } catch (e: Exception) {
-        Log.e("SYNCING_EXCEPTION", e.message!!)
-        result.success(null)
+        Log.e("SYNCING_EXCEPTION", e.message ?: e.toString())
+        Handler(Looper.getMainLooper()).post { result.success(null) }
       }
     }
   }
@@ -690,10 +706,10 @@ internal class DocumentFileApi(private val plugin: SafPlugin) :
         for (uri in sourceFileUris) {
           util.syncCopyFileToExternalStorage(uri, cacheDirectoryName!!, nameFromFileUri(uri).toString())
         }
-        result.success(true)
+        Handler(Looper.getMainLooper()).post { result.success(true) }
       } catch (e: Exception) {
-        Log.e("SYNCING_EXCEPTION", e.message!!)
-        result.success(null)
+        Log.e("SYNCING_EXCEPTION", e.message ?: e.toString())
+        Handler(Looper.getMainLooper()).post { result.success(null) }
       }
     }
   }
