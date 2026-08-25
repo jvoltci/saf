@@ -1,3 +1,10 @@
+## 2.1.1
+
+- Android: compatible with AGP 9's built-in Kotlin (#45). The Kotlin Gradle
+  Plugin is now applied only when building with AGP < 9, so the plugin builds
+  on both current Flutter versions and the upcoming built-in-Kotlin default.
+  No Dart API changes.
+
 ## 2.1.0
 
 - New: `openFileDescriptor` / `closeFileDescriptor` open a live file descriptor
