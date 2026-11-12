@@ -147,7 +147,7 @@ path, write a file back. `cd example && flutter run`.
 ---
 
 <p align="center">
-  <sub>Built &amp; maintained by <a href="https://github.com/lognjais"><b>jvoltci</b></a> &nbsp;·&nbsp; <a href="https://lognjais.github.io/saf/">Docs</a> &nbsp;·&nbsp; <a href="https://github.com/lognjais/saf/issues">Issues</a> &nbsp;·&nbsp; <a href="https://pub.dev/packages/saf">pub.dev</a> &nbsp;·&nbsp; MIT License</sub>
+  <sub>Built &amp; maintained by <a href="https://github.com/jvoltci"><b>jvoltci</b></a> &nbsp;·&nbsp; <a href="https://jvoltci.github.io/saf/">Docs</a> &nbsp;·&nbsp; <a href="https://github.com/jvoltci/saf/issues">Issues</a> &nbsp;·&nbsp; <a href="https://pub.dev/packages/saf">pub.dev</a> &nbsp;·&nbsp; MIT License</sub>
 </p>
 <p align="center"><sub>⭐ If <code>saf</code> saves you time, star the repo — it helps other Flutter devs find it.</sub></p>
 
