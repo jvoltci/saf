@@ -18,6 +18,6 @@ pubspec.lock
 CLAUDE.md
 
 # Website source — built and deployed to GitHub Pages by CI, not needed in the
-# published package. Rendered docs live at https://lognjais.github.io/saf/.
+# published package. Rendered docs live at https://jvoltci.github.io/saf/.
 docs/
 mkdocs.yml

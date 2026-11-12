@@ -61,7 +61,7 @@ print(utf8.decode(bytes)); // Hello from saf 2.0!
 
 ## 4. Handle errors
 
-Every operation throws a typed [`SafException`](https://lognjais.github.io/saf/api/):
+Every operation throws a typed [`SafException`](https://jvoltci.github.io/saf/api/):
 
 ```dart
 try {
@@ -74,4 +74,4 @@ try {
 ```
 
 Next: **[Recipes](guide.md)** for every operation, or the full
-**[API reference](https://lognjais.github.io/saf/api/)**.
+**[API reference](https://jvoltci.github.io/saf/api/)**.

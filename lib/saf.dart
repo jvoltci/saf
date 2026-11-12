@@ -3,7 +3,7 @@
 /// recursive walk, streamed read/write with progress, and local-file
 /// bridging — in a single [Saf] class.
 ///
-/// See the [project page](https://lognjais.github.io/saf/) for usage examples.
+/// See the [project page](https://jvoltci.github.io/saf/) for usage examples.
 library;
 
 export 'src/v2/exceptions.dart' hide mapPlatformException;

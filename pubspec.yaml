@@ -1,9 +1,9 @@
 name: saf
 description: Flutter plugin that leverages Storage Access Framework (SAF) API to get access and perform the operations on files and folders.
-homepage: https://lognjais.github.io/saf/
-repository: https://github.com/lognjais/saf
-issue_tracker: https://github.com/lognjais/saf/issues
-documentation: https://lognjais.github.io/saf/
+homepage: https://jvoltci.github.io/saf/
+repository: https://github.com/jvoltci/saf
+issue_tracker: https://github.com/jvoltci/saf/issues
+documentation: https://jvoltci.github.io/saf/
 version: 2.1.2
 
 environment:

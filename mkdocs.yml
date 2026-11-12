@@ -1,8 +1,8 @@
 site_name: saf
 site_description: One class for the Android Storage Access Framework — pickers, permissions, file management, streaming read/write, recursive walk, and progress.
-site_url: https://lognjais.github.io/saf/
-repo_url: https://github.com/lognjais/saf
-repo_name: lognjais/saf
+site_url: https://jvoltci.github.io/saf/
+repo_url: https://github.com/jvoltci/saf
+repo_name: jvoltci/saf
 edit_uri: edit/master/docs/
 copyright: Built &amp; maintained by jvoltci · MIT License
 
@@ -76,7 +76,7 @@ nav:
   - Migrate: migration.md
   - Reference:
       - Architecture: architecture.md
-      - API reference (dartdoc): https://lognjais.github.io/saf/api/
+      - API reference (dartdoc): https://jvoltci.github.io/saf/api/
   - FAQ: faq.md
 
 # Internal planning/QA docs live under docs/ but are not part of the site.
@@ -90,6 +90,6 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/lognjais/saf
+      link: https://github.com/jvoltci/saf
     - icon: simple/dart
       link: https://pub.dev/packages/saf
